@@ -1,4 +1,6 @@
 from bluepy.btle import Scanner, DefaultDelegate
+import paho.mqtt.client
+import paho.mqtt.publish as publisher
 
 class ScanDelegate(DefaultDelegate):
     def __init__(self):
@@ -6,11 +8,21 @@ class ScanDelegate(DefaultDelegate):
 
     def handleDiscovery(self, dev, isNewDev, isNewData):
         if isNewDev:
-            print "Discovered device",  dev.addr,  " ", dev.rssi
+            print "Discovered device",  dev.addr,  " -> ", dev.rssi
+            publisher.single('update/sensors', dev.rssi, hostname='127.0.0.1')
         elif isNewData:
-            print "Received new data from", dev.addr
+            print "Received new data from", dev.addr, " -> ", dev.rssi
 
 scanner = Scanner().withDelegate(ScanDelegate())
+
+
+
+
+
+
+
+def on_connect(client, userdata, flags, rc):
+    print('connected')
 
 while(True):
 	devices = scanner.scan(0.5)
