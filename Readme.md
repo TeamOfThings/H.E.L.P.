@@ -10,4 +10,10 @@
 * https://github.com/eclipse/paho.mqtt.python
 * https://docs.python.org/2/library/json.html
 
-- [ ] hello
+## TODO
+- [ ] Dormire
+- [ ] chiedere la macchina virtuale al chessa
+- [ ] sniffer  : leggere il file di configurazione per settare le variabili
+- [ ] sniffer  : inviare al broker un messaggio formattato json contenente macAddrBeacon, idRaspberry, RSSI, timestamp (?)
+- [ ] analyzer : registrarlo al topic mqtt e raggruppare i dati per macAddrBeacon[].idRaspberry[]
+- [ ] analyzer : todo
