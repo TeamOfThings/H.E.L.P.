@@ -26,7 +26,7 @@ def on_connect(client, userdata, flags, rc):
     print('connected')
 
 while(True):
-	devices = scanner.scan(0.4)
+	devices = scanner.scan(1)
 	
 	#for dev in devices:
 	#	print "Device %s (%s), RSSI=%d dB" % (dev.addr, dev.addrType, dev.rssi)
