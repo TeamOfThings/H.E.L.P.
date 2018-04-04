@@ -1,6 +1,7 @@
 from bluepy.btle import Scanner, DefaultDelegate
 import paho.mqtt.client
 import paho.mqtt.publish as publisher
+import json
 
 class ScanDelegate(DefaultDelegate):
     def __init__(self):
@@ -25,9 +26,9 @@ def on_connect(client, userdata, flags, rc):
     print('connected')
 
 while(True):
-	devices = scanner.scan(0.5)
-
+	devices = scanner.scan(0.4)
+	
 	#for dev in devices:
-	#    print "Device %s (%s), RSSI=%d dB" % (dev.addr, dev.addrType, dev.rssi)
-	#    for (adtype, desc, value) in dev.getScanData():
-	#	print "  %s = %s" % (desc, value)
+	#	print "Device %s (%s), RSSI=%d dB" % (dev.addr, dev.addrType, dev.rssi)
+	#	for (adtype, desc, value) in dev.getScanData():
+	#		print "  %s = %s" % (desc, value)
