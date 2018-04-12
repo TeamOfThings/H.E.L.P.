@@ -1,7 +1,16 @@
 {
 	"position": "camera",
 	"id": "dd03f",
-	"devices" : ["0c:f3:ee:04:2e:5e", "0c:f3:ee:04:2e:b4", "0c:f3:ee:04:30:d5", "05:f3:ee:04:2e:fe"],
+	"devices" : [
+		{ "name" : "chiara",
+		  "mac"  : "0c:f3:ee:04:2e:5e"},
+		{ "name" : "luca",
+		  "mac"  : "0c:f3:ee:04:2e:b4"}, 
+		{ "name" : "andrea",
+		  "mac"  : "0c:f3:ee:04:30:d5"},
+		{ "name" : "nerfgun",
+		  "mac"  : "0c:f3:ee:04:2e:fe"}
+	],
 	"broker-ip":"127.0.0.1",
 	"topic":"sensors"
 }
