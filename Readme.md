@@ -13,7 +13,7 @@
 ## TODO
 - [ ] Dormire
 - [x] ~chiedere la macchina virtuale al chessa~
-- [ ] sniffer  : leggere il file di configurazione per settare le variabili
+- [x] sniffer  : leggere il file di configurazione per settare le variabili
 - [ ] sniffer  : inviare al broker un messaggio formattato json contenente macAddrBeacon, idRaspberry, RSSI, timestamp (?)
 - [ ] analyzer : registrarlo al topic mqtt e raggruppare i dati per macAddrBeacon[].idRaspberry[]
 - [ ] analyzer : todo
