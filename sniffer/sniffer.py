@@ -9,17 +9,21 @@ import sys
 devicesArray = []
 
 
-### ####
-### MAIN
 def main():
+    """
+        Usage:
+            sudo python sniffer station.json
+
+            sudo:           important!!
+            station.json:   configuration file for the environment setup
+    """
     scanner = None
     json_data = None
 
-    print ("Hello client!")
     if len(sys.argv) != 2:
         sys.exit("Wrong numer of arguments")
 
-    print ("Initializing station..")
+    print ("Initializing station")
     scanner = Scanner().withDelegate(ScanDelegate())
 
     json_data = json.load(open(sys.argv[1]))
@@ -43,15 +47,21 @@ def main():
 
 
 class ScanDelegate(DefaultDelegate):
+    """
+        Class for the bluetooth intervace
+    """
     def __init__(self):
         DefaultDelegate.__init__(self)
 
     def handleDiscovery(self, dev, isNewDev, isNewData):
+        """
+            handler after discovered new device
+        """
         if isNewDev:
             for e in devicesArray:
                 if e["mac"] == dev.addr:
                     print "Name: ", e["name"], "\tRSSI: ", dev.rssi
-        # publisher.single('hello', dev.rssi, hostname='192.168.1.75')
+                    publisher.single('update/sensors', dev.rssi, hostname='localhost')
     # elif isNewData:
     #    print "Received new data from", dev.addr, " -> ", dev.rssi'''
 
