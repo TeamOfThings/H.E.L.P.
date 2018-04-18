@@ -57,11 +57,12 @@ class ScanDelegate(DefaultDelegate):
         """
             handler after discovered new device
         """
-        if isNewDev:
-            for e in devicesArray:
-                if e["mac"] == dev.addr:
-                    print "Name: ", e["name"], "\tRSSI: ", dev.rssi
-                    publisher.single('update/sensors', dev.rssi, hostname='localhost')
+#        if isNewDev:
+        for e in devicesArray:
+            if e["mac"] == dev.addr:
+                payload = buildStringPayload(e["name"], dev.rssi)
+                print payload
+                publisher.single('update/sensors', dev.rssi, hostname='localhost')
     # elif isNewData:
     #    print "Received new data from", dev.addr, " -> ", dev.rssi'''
 
@@ -70,5 +71,11 @@ def on_connect(client, userdata, flags, rc):
     print('connected')
 
 
+def buildStringPayload(name, rssi):
+    payload = {}
+    payload["name"] = str(name)
+    payload["rssi"] = str(rssi)
+    return str(payload)
+ 
 if __name__ == "__main__":
     main()
