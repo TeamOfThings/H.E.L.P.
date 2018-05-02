@@ -19,7 +19,7 @@
       "mac": "0c:f3:ee:04:2e:fe"
     }
   ],
-  "broker-ip": "127.0.0.1",
-  "topic": "sensors",
+  "broker-ip": "192.168.1.99",
+  "topic": "update/sensors",
   "scan_interval": "0.5"
 }
