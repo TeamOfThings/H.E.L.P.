@@ -6,8 +6,13 @@ import paho.mqtt.publish as publisher
 import json
 import sys
 
-devicesArray = []
-
+# Global Variables, init with default value
+stationId       = ""
+position        = ""
+devicesArray    = []
+brokerIP        = "127.0.0.1"
+topic           = ""
+scanInterval    = "1"
 
 def main():
     """
@@ -31,19 +36,24 @@ def main():
     #####*****#####
     #####*****#####
 
+    global stationId
+    global position
     global devicesArray
-    print ("Station ID is: " + json_data["id"])
+    global brokerIP
+    global topic
+    global scanInterval
+
+    stationId    = json_data["id"]
+    position     = json_data["position"]
     devicesArray = json_data["devices"]
+    brokerIP     = json_data["broker-ip"]
+    topic        = json_data["topic"]
+    scanInterval = float(json_data["scan_interval"])
 
     while (True):
-        devices = scanner.scan(float(json_data["scan_interval"]))
+        devices = scanner.scan(scanInterval)
     ## Test code..
 
-
-# for dev in devices:
-#	print "Device %s (%s), RSSI=%d dB" % (dev.addr, dev.addrType, dev.rssi)
-#	for (adtype, desc, value) in dev.getScanData():
-#		print "  %s = %s" % (desc, value)
 
 
 class ScanDelegate(DefaultDelegate):
@@ -57,14 +67,12 @@ class ScanDelegate(DefaultDelegate):
         """
             handler after discovered new device
         """
-#        if isNewDev:
+
         for e in devicesArray:
             if e["mac"] == dev.addr:
                 payload = buildStringPayload(e["name"], dev.rssi)
                 print payload
-                publisher.single('update/sensors', dev.rssi, hostname='localhost')
-    # elif isNewData:
-    #    print "Received new data from", dev.addr, " -> ", dev.rssi'''
+                publisher.single(topic, payload, hostname=brokerIP)
 
 
 def on_connect(client, userdata, flags, rc):
@@ -73,9 +81,15 @@ def on_connect(client, userdata, flags, rc):
 
 def buildStringPayload(name, rssi):
     payload = {}
+    payload["station-id"] = str(stationId)
+    payload["position"] = str(position)
     payload["name"] = str(name)
     payload["rssi"] = str(rssi)
+
+    json.dumps(payload)
+
     return str(payload)
  
+
 if __name__ == "__main__":
     main()
