@@ -19,9 +19,10 @@ def on_message(client, userdata, message):
 	s = str(message.payload.decode("utf-8"))
 	jsonMsg = json.loads(s)
 
+	print(str(jsonMsg["rssi"]) + "<=>" + str(jsonMsg["name"]))
 	# Salvati le cose
 
-	# Deidere quando fare la triangolazione , luca è stupido lol
+	# Deidere quando fare la triangolazione , luca  stupido lol
 
 	
 
