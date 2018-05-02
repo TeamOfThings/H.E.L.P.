@@ -11,9 +11,9 @@
 * https://docs.python.org/2/library/json.html
 
 ## TODO
-- [ ] Dormire
-- [x] ~chiedere la macchina virtuale al chessa~
+- [ ] Dormire :lollipop:
+- [x] ~chiedere la macchina virtuale al chessa~ :disappointed:
 - [x] sniffer  : leggere il file di configurazione per settare le variabili
-- [ ] sniffer  : inviare al broker un messaggio formattato json contenente macAddrBeacon, idRaspberry, RSSI, timestamp (?)
+- [X] sniffer  : inviare al broker un messaggio formattato json contenente macAddrBeacon, idRaspberry, RSSI, timestamp :collision:
 - [ ] analyzer : registrarlo al topic mqtt e raggruppare i dati per macAddrBeacon[].idRaspberry[]
-- [ ] analyzer : todo
+- [ ] analyzer : trovare un algoritmo di triangolazione (leggere bene su RSSI distanza stimata)
