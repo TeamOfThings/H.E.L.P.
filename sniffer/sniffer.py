@@ -14,6 +14,7 @@ brokerIP        = "127.0.0.1"
 topic           = ""
 scanInterval    = "1"
 
+
 def main():
     """
         Usage:
@@ -52,8 +53,6 @@ def main():
 
     while (True):
         devices = scanner.scan(scanInterval)
-    ## Test code..
-
 
 
 class ScanDelegate(DefaultDelegate):
@@ -80,16 +79,17 @@ def on_connect(client, userdata, flags, rc):
 
 
 def buildStringPayload(name, rssi):
+    """
+        Build the payload of our beacon frame
+    """
     payload = {}
     payload["station-id"] = str(stationId)
     payload["position"] = str(position)
     payload["name"] = str(name)
     payload["rssi"] = str(rssi)
 
-    json.dumps(payload)
+    return json.dumps(payload)
 
-    return str(payload)
- 
 
 if __name__ == "__main__":
     main()

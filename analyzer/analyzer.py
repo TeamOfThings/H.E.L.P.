@@ -3,7 +3,13 @@ import paho.mqtt.publish as publisher
 import time
 import json
 
+# tabella per ogni rasperry, per ogni beacon ricevuto
+	# Determinare dimensione max tabella (ie quando fare triangolazione)
+	# fare triangolazione
+
+
 # Salvarci gli rssi
+#
 
 def on_message(client, userdata, message):
 	"""
@@ -11,15 +17,12 @@ def on_message(client, userdata, message):
 	"""
 
 	s = str(message.payload.decode("utf-8"))
-	print(s)
 	jsonMsg = json.loads(s)
-#	print(jsonMsg)
 
-	# Calcola
+	# Salvati le cose
 
-#	print("topic: ", message.topic)
-#	print("qos: ", message.qos)
-#	print("message retain flag", message.retain)
+	# Deidere quando fare la triangolazione , luca è stupido lol
+
 	
 
 broker_address = "localhost" 
