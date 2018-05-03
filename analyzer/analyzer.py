@@ -3,13 +3,20 @@ import paho.mqtt.publish as publisher
 import time
 import json
 import numpy
-
+import sys
+from flask import Flask, abort, Response
 from threading import Thread
 
 """
 	beacon dictionary <name, BeaconInfo>
 """
 beaconTable = {}
+
+"""
+    Instance of web-server
+"""
+webApp = Flask(__name__)
+
 
 
 class Triangulate(Thread):
@@ -32,10 +39,11 @@ class Triangulate(Thread):
 	def run(self):
 		while(True):
 			time.sleep(self.__time)
-			print("Thread computing")
+			print("TODO: Thread computing")
 			#####
 			# TODO: Inserire qui codice di triangolazione
 			#####
+
 
 
 class BeaconInfo():
@@ -93,6 +101,61 @@ class BeaconInfo():
 
 
 
+class WebServer(Thread):
+    """
+        Thread running the web server
+    """
+
+    def __init__(self, app, port):
+        Thread.__init__(self)
+        self.__flaskApp= app
+        self.__port= port
+
+
+    def run(self):
+        self.__flaskApp.run("0.0.0.0", self.__port)
+
+
+## Routing rules for web server thread
+@webApp.route('/')
+def root():
+    return Response("Welcome to REST API!", status=200, content_type="text/plain")
+
+#####
+#####     /rooms
+@webApp.route("/rooms", methods=["GET"])
+def roomsGet():
+    rooms= {}
+    return Response('["list of all rooms"]', status=200, content_type="application/json")
+
+#####
+#####     /rooms/<rid>
+@webApp.route("/rooms/<rid>", methods=['POST'])
+def postRooms(rid):
+    return Response("Creating room " + rid, status=201, content_type="test/plain")
+
+@webApp.route("/rooms/<rid>", methods=['DELETE'])
+def deleteRooms(rid):
+    return Response("Deleting room " + rid, status=200, content_type="test/plain")
+
+#####
+#####     /readings/<bid>
+@webApp.route("/readings/<bid>", methods=['GET'])
+def getReadings(bid):
+    return Response("Retrieving all readings about a beacon grouped by rooms (json object of json array)", status=200, content_type="test/plain")
+
+@webApp.route("/readings/<bid>", methods=['DELETE'])
+def deleteReadings(bid):
+    return Response("Deleting readings for " + bid, status=200, content_type="test/plain")
+
+#####
+#####     /people/<rid>
+@webApp.route("/people/<rid>", methods=["GET"])
+def getPeople(rid):
+    return Response('["list of people in a room"]', status=200, content_type="application/json")
+
+
+
 def on_message(client, userdata, message):
 	"""
 		Broker callback once a msg is received
@@ -108,20 +171,22 @@ def main():
 		Main
 	"""
 
-	global beaconTable
+	if len(sys.argv) != 2 :
+		sys.exit("Wrong number of arguments!\n\tExiting")
 
+	print ("Initializing server")
+	jsonData = json.load(open(sys.argv[1]))
+	#print(json.dumps(jsonData))
+
+	global beaconTable
 	beaconTable = dict()
-	beaconTable["nerfgun"] = BeaconInfo("nerfgun")
-	beaconTable["luca"] = BeaconInfo("luca")
-	beaconTable["chiara"] = BeaconInfo("chiara")
-	beaconTable["andrea"] = BeaconInfo("andrea")
-	#####
-	# TODO: prendere questi dati da un file prodotto da una precedente fase di installazione o in altro modo salvato 
-	#####
+	for b in jsonData["devices"] :
+		beaconTable[b]= BeaconInfo(b)
+	#print (beaconTable)
 	
 	# Instantiate Broker
-	broker_address = "localhost" 
-	topic = "update/sensors"
+	broker_address = jsonData["broker-ip"]
+	topic = jsonData["topic"]
 
 	print ("Init broker")
 
@@ -132,9 +197,14 @@ def main():
 	client.loop_start()
 
 	# Activate triangulator thread
-	triangulate = Triangulate(5)
+	triangulate = Triangulate(int(jsonData["algorithm-interval"]))
 	triangulate.daemon = True
 	triangulate.start()
+
+    # Activating web-server thread
+	webServer= WebServer(webApp, int(jsonData["listening-port"]))
+	webServer.daemon = True
+	webServer.start()
 
 	print ("Starting loop")
 

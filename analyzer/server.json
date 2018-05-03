@@ -1,0 +1,8 @@
+{
+    "broker-ip" : "127.0.0.1",
+    "topic" : "update/sensors",
+    "algorithm-interval" : "5",
+    "listening-port" : "8080",
+    "rooms" : [],
+    "devices" : ["chiara", "luca", "andrea", "nerfgun"]
+}

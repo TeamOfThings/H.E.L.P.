@@ -27,7 +27,7 @@ def main():
     json_data = None
 
     if len(sys.argv) != 2:
-        sys.exit("Wrong numer of arguments")
+        sys.exit("Wrong number of arguments")
 
     print ("Initializing station")
     scanner = Scanner().withDelegate(ScanDelegate())

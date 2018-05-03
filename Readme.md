@@ -10,6 +10,15 @@
 * https://github.com/eclipse/paho.mqtt.python
 * https://docs.python.org/2/library/json.html
 
+
+### REST API
+||GET|POST|DELETE|
+|---|---|---|---|
+|**/rooms/**|Get the list of all rooms|-|-|
+|**/rooms/[rid]**|-|Create new room (given as parameter)|Delete a room (given as parameter)|
+|**/readings/[bId]**|Get the list of readings about a beacon (grouped by room)|-|Delete ALL readings about a beacon|
+|**/people/[rId]**|Get the list of people (iBeacon) in the selected room|-|-|
+
 ## TODO
 - [ ] Dormire :lollipop:
 - [x] ~chiedere la macchina virtuale al chessa~ :disappointed:
