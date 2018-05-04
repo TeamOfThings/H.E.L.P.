@@ -26,3 +26,4 @@
 - [X] sniffer  : inviare al broker un messaggio formattato json contenente macAddrBeacon, idRaspberry, RSSI, timestamp :collision:
 - [ ] analyzer : registrarlo al topic mqtt e raggruppare i dati per macAddrBeacon[].idRaspberry[]
 - [ ] analyzer : trovare un algoritmo di triangolazione (leggere bene su RSSI distanza stimata), per esempio media pesata con maggior peso alla stazione da cui abbiamo ricevuto più messaggi (perché magari le altre sono fuori portata / al di là di un ostacolo) :tractor:
+- [ ] Ricaricare station.json sui raspberry

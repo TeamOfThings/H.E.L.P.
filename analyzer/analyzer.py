@@ -4,7 +4,7 @@ import time
 import json
 import numpy
 import sys
-from flask import Flask, abort, Response
+from flask import Flask, abort, Response 
 from threading import Thread
 
 """
@@ -162,9 +162,24 @@ def on_message(client, userdata, message):
 	"""
 
 	jsonMsg = json.loads(str(message.payload.decode("utf-8")))
-
-	beaconTable[jsonMsg["name"]].addMeasure(str(jsonMsg["position"]), str(jsonMsg["rssi"]))
-
+	print(jsonMsg)
+	#beaconTable[jsonMsg["name"]].addMeasure(str(jsonMsg["position"]), str(jsonMsg["rssi"]))
+	#####
+	# TODO: Spacchettare il payload ricevuto, decidere come salvarsi i dati per il thread Triangulate
+	#####
+	"""
+		forma del payload
+		{
+			"id" : value
+			"position" : value
+			{
+				"andrea" : [rssi_1, ..., rssi_n]
+				"luca" : [rssi_1, ..., rssi_n]
+				"chiara" : [rssi_1, ..., rssi_n]
+				"nerfgun" : [rssi_1, ..., rssi_n]
+			}
+		}
+	"""
 
 def main():
 	"""
@@ -199,12 +214,12 @@ def main():
 	# Activate triangulator thread
 	triangulate = Triangulate(int(jsonData["algorithm-interval"]))
 	triangulate.daemon = True
-	triangulate.start()
+#	triangulate.start()
 
     # Activating web-server thread
 	webServer= WebServer(webApp, int(jsonData["listening-port"]))
 	webServer.daemon = True
-	webServer.start()
+#	webServer.start()
 
 	print ("Starting loop")
 

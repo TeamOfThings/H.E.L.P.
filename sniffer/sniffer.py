@@ -3,8 +3,10 @@
 from bluepy.btle import Scanner, DefaultDelegate
 import paho.mqtt.client
 import paho.mqtt.publish as publisher
+import time
 import json
 import sys
+from threading import Thread
 
 # Global Variables, init with default value
 stationId       = ""
@@ -15,10 +17,82 @@ topic           = ""
 scanInterval    = "1"
 
 
+class ScanDelegate(DefaultDelegate):
+    """
+        Class for the bluetooth interface
+        As soon as it reads a new value, it gives it to the sender who collect them
+
+        Instances:
+            __sender: a reference to the sender thread
+    """
+    def __init__(self, sender):
+        DefaultDelegate.__init__(self)
+        self.__sender = sender
+
+
+    # Scan methods
+    def handleDiscovery(self, dev, isNewDev, isNewData):
+        """
+            handler after discovered new device
+        """
+
+        for e in devicesArray:
+            if e["mac"] == dev.addr:
+                self.__sender.addMeasurement(e["name"], dev.rssi)
+#                payload = buildStringPayload(e["name"], dev.rssi)
+#                print payload
+#                publisher.single(topic, payload, hostname=brokerIP)
+
+
+
+class Sender(Thread):
+    """
+        Thread sending the data to the server periodically
+
+        Instances:
+            __time:	time to wait before sending data
+            __map:  the map <beacon, measure_list>
+
+        Doing in this way, instead of sending an rssi as soon as we get it, the logic becomes more complex:
+        the station needs to store the entire list of sniffed rssis, and these can come from different beacons;
+        so that's why the station needs a map and should send it. The server should, then, unpack it
+    """
+
+    def __init__(self, time):
+        Thread.__init__(self)
+        self.__time = time 
+        self.__map = {}
+	
+
+    def run(self):
+        while(True):
+            time.sleep(self.__time)
+            payload = self.__buildPayload(self.__map)
+            print payload
+            publisher.single(topic, payload, hostname=brokerIP)
+            self.__map = {} # reset map
+            
+
+    def addMeasurement(self, name, rssi):
+        if not self.__map.has_key(name):
+            self.__map[name] = []
+
+        self.__map[name].append(int(rssi))
+
+
+    def __buildPayload(self, map):
+        payload = {}
+        payload["station-id"] = str(stationId)
+        payload["position"] = str(position)
+        payload["map"] = json.dumps(map)
+
+        return json.dumps(payload)
+        
+
 def main():
     """
         Usage:
-            sudo python sniffer station.json
+            sudo python sniffer.py station.json
 
             sudo:           important!!
             station.json:   configuration file for the environment setup
@@ -30,9 +104,13 @@ def main():
         sys.exit("Wrong number of arguments")
 
     print ("Initializing station")
-    scanner = Scanner().withDelegate(ScanDelegate())
-
     json_data = json.load(open(sys.argv[1]))
+
+    rssiSender = Sender(float(json_data["send-interval"]))
+    rssiSender.daemon = True
+
+    scanner = Scanner().withDelegate(ScanDelegate(rssiSender))
+
 
     #####*****#####
     #####*****#####
@@ -51,27 +129,14 @@ def main():
     topic        = json_data["topic"]
     scanInterval = float(json_data["scan_interval"])
 
+    # Start the routine sending the data to the server
+    rssiSender.start()
+
+    # Start scanning
     while (True):
         devices = scanner.scan(scanInterval)
+        
 
-
-class ScanDelegate(DefaultDelegate):
-    """
-        Class for the bluetooth intervace
-    """
-    def __init__(self):
-        DefaultDelegate.__init__(self)
-
-    def handleDiscovery(self, dev, isNewDev, isNewData):
-        """
-            handler after discovered new device
-        """
-
-        for e in devicesArray:
-            if e["mac"] == dev.addr:
-                payload = buildStringPayload(e["name"], dev.rssi)
-                print payload
-                publisher.single(topic, payload, hostname=brokerIP)
 
 
 def on_connect(client, userdata, flags, rc):
@@ -81,6 +146,8 @@ def on_connect(client, userdata, flags, rc):
 def buildStringPayload(name, rssi):
     """
         Build the payload of our beacon frame
+        
+        TODO: remove it
     """
     payload = {}
     payload["station-id"] = str(stationId)

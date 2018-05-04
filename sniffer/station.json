@@ -19,7 +19,9 @@
       "mac": "0c:f3:ee:04:2e:fe"
     }
   ],
-  "broker-ip": "192.168.1.99",
+  "broker-ip": "localhost",
+  "broker-ipISA": "192.168.1.99",
   "topic": "update/sensors",
-  "scan_interval": "0.5"
+  "scan_interval": "0.5",
+  "send-interval" : "5"
 }
