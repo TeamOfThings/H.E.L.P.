@@ -48,10 +48,16 @@ class Triangulate(Thread):
 			# copy of the current beacon table
 			temp_table = copy.deepcopy(beaconTable)
 			# beacon table reset
-			beaconTable.clear
+			for b in beaconTable :
+				beaconTable[b].cleanInfo()
+
 			lock.release()
 
-			print(temp_table)
+			print "\n\n"
+			for b in temp_table :
+				print (b , " -> ", temp_table[b].getMap())
+
+
 			#####
 			# TODO: Inserire qui codice di triangolazione
 			#####
@@ -175,7 +181,7 @@ def on_message(client, userdata, message):
 
 	jsonMsg = json.loads(message.payload.decode("utf-8"))
 
-	print(jsonMsg)
+#	print(jsonMsg)
 
 #	print(str(jsonMsg["station-id"]))
 #	print(str(jsonMsg["position"]))
@@ -244,7 +250,7 @@ def main():
 	# Activate triangulator thread
 	triangulate = Triangulate(int(jsonData["algorithm-interval"]))
 	triangulate.daemon = True
-#	triangulate.start()
+	triangulate.start()
 
     # Activating web-server thread
 	webServer= WebServer(webApp, int(jsonData["listening-port"]))
