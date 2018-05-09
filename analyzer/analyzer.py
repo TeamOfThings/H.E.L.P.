@@ -2,10 +2,10 @@ import paho.mqtt.client as mqtt
 import paho.mqtt.publish as publisher
 import time
 import json
-import numpy
+import numpy as np
 import sys
 from flask import Flask, abort, Response 
-from threading import Thread
+from threading import Thread, Condition
 
 """
 	beacon dictionary <name, BeaconInfo>
@@ -25,10 +25,7 @@ class Triangulate(Thread):
 	
 		Instances:
 			__time:	time to wait before performing triagulation
-
-		##### 
-		# TODO (nota): ho pensato ad un thread cosi' che ogni "IntervalloDiTempo" faccia la triangolazione, ed il main continua a raccogliare dati
-		#####
+			
 	"""
 
 	def __init__(self, time):
@@ -40,6 +37,8 @@ class Triangulate(Thread):
 		while(True):
 			time.sleep(self.__time)
 			print("TODO: Thread computing")
+
+
 			#####
 			# TODO: Inserire qui codice di triangolazione
 			#####
@@ -54,6 +53,7 @@ class BeaconInfo():
 			__map: 	a dictionary map <room, measure_list>
 			__id:	Beacon's id
 			__last:	last room a person was detected
+			__condition: condition variable 
 	"""
 
 
@@ -61,6 +61,7 @@ class BeaconInfo():
 		self.__map = dict()
 		self.__id = id
 		self.__last = ""
+		self.__condition = Condition()
 
 
 	# Getters
@@ -154,7 +155,7 @@ def deleteReadings(bid):
 def getPeople(rid):
     return Response('["list of people in a room"]', status=200, content_type="application/json")
 
-
+# TODO: metodi API REST per  aggiungere e rimuovere beacon
 
 def on_message(client, userdata, message):
 	"""
