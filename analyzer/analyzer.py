@@ -161,8 +161,11 @@ def on_message(client, userdata, message):
 		Broker callback once a msg is received
 	"""
 
-	jsonMsg = json.loads(str(message.payload.decode("utf-8")))
-	print(jsonMsg)
+	jsonMsg = json.loads(message.payload.decode("utf-8"))
+#	print(str(jsonMsg["station-id"]))
+#	print(str(jsonMsg["position"]))
+#	print(str(jsonMsg["map"]["andrea"]))
+
 	#beaconTable[jsonMsg["name"]].addMeasure(str(jsonMsg["position"]), str(jsonMsg["rssi"]))
 	#####
 	# TODO: Spacchettare il payload ricevuto, decidere come salvarsi i dati per il thread Triangulate

@@ -84,7 +84,7 @@ class Sender(Thread):
         payload = {}
         payload["station-id"] = str(stationId)
         payload["position"] = str(position)
-        payload["map"] = json.dumps(map)
+        payload["map"] = map
 
         return json.dumps(payload)
         
@@ -142,20 +142,6 @@ def main():
 def on_connect(client, userdata, flags, rc):
     print('connected')
 
-
-def buildStringPayload(name, rssi):
-    """
-        Build the payload of our beacon frame
-        
-        TODO: remove it
-    """
-    payload = {}
-    payload["station-id"] = str(stationId)
-    payload["position"] = str(position)
-    payload["name"] = str(name)
-    payload["rssi"] = str(rssi)
-
-    return json.dumps(payload)
 
 
 if __name__ == "__main__":
