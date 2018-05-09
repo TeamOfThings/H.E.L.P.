@@ -4,13 +4,19 @@ import time
 import json
 import numpy as np
 import sys
+import copy
 from flask import Flask, abort, Response 
-from threading import Thread, Condition
+from threading import Thread, Lock
 
 """
 	beacon dictionary <name, BeaconInfo>
 """
 beaconTable = {}
+
+"""
+	Lock
+"""
+lock = None
 
 """
     Instance of web-server
@@ -38,7 +44,14 @@ class Triangulate(Thread):
 			time.sleep(self.__time)
 			print("TODO: Thread computing")
 
+			lock.acquire(True)
+			# copy of the current beacon table
+			temp_table = copy.deepcopy(beaconTable)
+			# beacon table reset
+			beaconTable.clear
+			lock.release()
 
+			print(temp_table)
 			#####
 			# TODO: Inserire qui codice di triangolazione
 			#####
@@ -53,7 +66,6 @@ class BeaconInfo():
 			__map: 	a dictionary map <room, measure_list>
 			__id:	Beacon's id
 			__last:	last room a person was detected
-			__condition: condition variable 
 	"""
 
 
@@ -61,7 +73,6 @@ class BeaconInfo():
 		self.__map = dict()
 		self.__id = id
 		self.__last = ""
-		self.__condition = Condition()
 
 
 	# Getters
@@ -87,7 +98,7 @@ class BeaconInfo():
 		"""
 			Add a received measure from a given room
 		"""
-		
+
 		if not self.__map.has_key(room):
 			self.__map[room] = []
 
@@ -170,9 +181,13 @@ def on_message(client, userdata, message):
 #	print(str(jsonMsg["position"]))
 #	print(str(jsonMsg["map"]["nerfgun"]))
 
+	lock.acquire(True)
+
 	for b in jsonMsg["map"] :
 		for m in jsonMsg["map"][b] :
-			beaconTable[b].addMeasure(m)
+			beaconTable[b].addMeasure(jsonMsg["position"], m)
+	
+	lock.release()
 
 	#####
 	# TODO: Spacchettare il payload ricevuto, decidere come salvarsi i dati per il thread Triangulate
@@ -206,7 +221,11 @@ def main():
 	#print(json.dumps(jsonData))
 
 	global beaconTable
+	global lock
+
 	beaconTable = dict()
+	lock = Lock()
+
 	for b in jsonData["devices"] :
 		beaconTable[b]= BeaconInfo(b)
 	
