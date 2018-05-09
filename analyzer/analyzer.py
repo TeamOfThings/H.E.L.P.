@@ -163,11 +163,17 @@ def on_message(client, userdata, message):
 	"""
 
 	jsonMsg = json.loads(message.payload.decode("utf-8"))
+
+	print(jsonMsg)
+
 #	print(str(jsonMsg["station-id"]))
 #	print(str(jsonMsg["position"]))
-#	print(str(jsonMsg["map"]["andrea"]))
+#	print(str(jsonMsg["map"]["nerfgun"]))
 
-	#beaconTable[jsonMsg["name"]].addMeasure(str(jsonMsg["position"]), str(jsonMsg["rssi"]))
+	for b in jsonMsg["map"] :
+		for m in jsonMsg["map"][b] :
+			beaconTable[b].addMeasure(m)
+
 	#####
 	# TODO: Spacchettare il payload ricevuto, decidere come salvarsi i dati per il thread Triangulate
 	#####
@@ -185,6 +191,8 @@ def on_message(client, userdata, message):
 		}
 	"""
 
+
+
 def main():
 	"""
 		Main
@@ -201,7 +209,6 @@ def main():
 	beaconTable = dict()
 	for b in jsonData["devices"] :
 		beaconTable[b]= BeaconInfo(b)
-	#print (beaconTable)
 	
 	# Instantiate Broker
 	broker_address = jsonData["broker-ip"]
