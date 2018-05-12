@@ -5,7 +5,7 @@ import json
 import numpy as np
 import sys
 import copy
-from flask import Flask, abort, Response 
+from flask import Flask, abort, Response, request
 from threading import Thread, Lock
 
 """
@@ -86,7 +86,9 @@ class Triangulate(Thread):
 						MAXIMO = info[pos]["mean"]
 				
 				if stanza != "":
-					print(bea + " si trova in " + stanza)
+					beaconTable[bea].setLast(stanza)
+				
+				print(beaconTable[bea].getLast())
 
 
 
@@ -157,14 +159,15 @@ class WebServer(Thread):
         Thread running the web server
     """
 
-    def __init__(self, app, port):
-        Thread.__init__(self)
-        self.__flaskApp= app
-        self.__port= port
+    def __init__(self, app, ip, port):
+		Thread.__init__(self)
+		self.__flaskApp= app
+		self.__port= port
+		self.__ip = ip
 
 
     def run(self):
-        self.__flaskApp.run("0.0.0.0", self.__port)
+		self.__flaskApp.run(self.__ip, self.__port)
 
 
 ## Routing rules for web server thread
@@ -198,6 +201,20 @@ def getReadings(bid):
 @webApp.route("/readings/<bid>", methods=['DELETE'])
 def deleteReadings(bid):
     return Response("Deleting readings for " + bid, status=200, content_type="test/plain")
+
+
+#####
+#####     /people
+@webApp.route("/people", methods=["GET"])
+def getPeopleLocations():
+
+	people = dict()
+	for b in beaconTable:
+		if not beaconTable[b].getLast() == "":
+			people[b] = str(beaconTable[b].getLast())
+	print(people)
+	return Response(json.dumps(people), status=200, content_type="application/json")
+
 
 #####
 #####     /people/<rid>
@@ -282,9 +299,9 @@ def main():
 	triangulate.start()
 
     # Activating web-server thread
-	webServer= WebServer(webApp, int(jsonData["listening-port"]))
+	webServer= WebServer(webApp, jsonData["server-ip"], int(jsonData["server-port"]))
 	webServer.daemon = True
-#	webServer.start()
+	webServer.start()
 
 	print ("Starting loop")
 
