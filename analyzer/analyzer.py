@@ -24,7 +24,6 @@ lock = None
 webApp = Flask(__name__)
 
 
-
 class Triangulate(Thread):
 	"""
 		Thread performing the triangulation
@@ -42,7 +41,6 @@ class Triangulate(Thread):
 	def run(self):
 		while(True):
 			time.sleep(self.__time)
-			print("TODO: Thread computing")
 
 			lock.acquire(True)
 			# copy of the current beacon table
@@ -53,14 +51,42 @@ class Triangulate(Thread):
 
 			lock.release()
 
-			print "\n\n"
-			for b in temp_table :
-				print (b , " -> ", temp_table[b].getMap())
+			for bea in temp_table :
+				# For each beacon
 
+				info = {}
+				sumLen = 0
 
-			#####
-			# TODO: Inserire qui codice di triangolazione
-			#####
+				for pos in temp_table[bea].getMap():
+					# For each room
+
+					s = sum(temp_table[bea].getMap()[pos])
+					l = len(temp_table[bea].getMap()[pos])
+					sumLen += l
+
+					info[pos] = dict()
+					info[pos]["lis"] = temp_table[bea].getMap()[pos]
+					if l == 0 :
+						# No msg received
+						info[pos]["mean"] = float("inf")
+						info[pos]["var"] = float("inf")
+						info[pos]["len"] = float("inf")
+					else:
+						info[pos]["mean"] = s / l
+						info[pos]["var"] = float(np.var(info[pos]["lis"]))
+						info[pos]["len"] = l
+
+				# Get located room
+				MAXIMO = float("-inf")
+				stanza = ""
+				for pos in info :
+
+					if info[pos]["mean"] > MAXIMO:
+						stanza = pos					
+						MAXIMO = info[pos]["mean"]
+				
+				if stanza != "":
+					print(bea + " si trova in " + stanza)
 
 
 
@@ -105,17 +131,24 @@ class BeaconInfo():
 			Add a received measure from a given room
 		"""
 
-		if not self.__map.has_key(room):
-			self.__map[room] = []
+		if not self.__map.has_key(str(room)):
+			self.__map[str(room)] = []
 
-		self.__map[room].append(int(measure))
+		self.__map[str(room)].extend(measure)
 
 
 	def cleanInfo(self):
 		"""
 			Clean the current (rssi) values from the map
 		"""
-		self.__map = self.__map.fromkeys(self.__map, [])
+		for e in self.__map:
+			self.__map[e] = []
+
+
+
+
+
+
 
 
 
@@ -174,6 +207,13 @@ def getPeople(rid):
 
 # TODO: metodi API REST per  aggiungere e rimuovere beacon
 
+
+
+
+
+
+
+
 def on_message(client, userdata, message):
 	"""
 		Broker callback once a msg is received
@@ -181,23 +221,12 @@ def on_message(client, userdata, message):
 
 	jsonMsg = json.loads(message.payload.decode("utf-8"))
 
-#	print(jsonMsg)
-
-#	print(str(jsonMsg["station-id"]))
-#	print(str(jsonMsg["position"]))
-#	print(str(jsonMsg["map"]["nerfgun"]))
-
 	lock.acquire(True)
 
 	for b in jsonMsg["map"] :
-		for m in jsonMsg["map"][b] :
-			beaconTable[b].addMeasure(jsonMsg["position"], m)
-	
+		beaconTable[b].addMeasure(jsonMsg["position"],  jsonMsg["map"][b])
+		
 	lock.release()
-
-	#####
-	# TODO: Spacchettare il payload ricevuto, decidere come salvarsi i dati per il thread Triangulate
-	#####
 	"""
 		forma del payload
 		{
