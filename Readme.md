@@ -17,6 +17,7 @@
 |**/rooms/**|Get the list of all rooms|-|-|
 |**/rooms/[rid]**|-|Create new room (given as parameter)|Delete a room (given as parameter)|
 |**/readings/[bId]**|Get the list of readings about a beacon (grouped by room)|-|Delete ALL readings about a beacon|
+|**/people/[rId]**|Get list of people locations|-|-|
 |**/people/[rId]**|Get the list of people (iBeacon) in the selected room|-|-|
 
 ## TODO
@@ -26,8 +27,8 @@
 - [X] sniffer  : inviare al broker un messaggio formattato json contenente macAddrBeacon, idRaspberry, RSSI, timestamp :collision:
 - [X] analyzer : registrarlo al topic mqtt e raggruppare i dati per macAddrBeacon[].idRaspberry[]
 - [X] analyzer : trovare un algoritmo di triangolazione (leggere bene su RSSI distanza stimata), per esempio media pesata con maggior peso alla stazione da cui abbiamo ricevuto più messaggi (perché magari le altre sono fuori portata / al di là di un ostacolo) , varianza :tractor:
-- [ ] analyzer : raffinare algoritmo di localizzazione
-- [ ] RESTful : scrivere il API servizio (soprattutto pensare alla fase di installazione ed aggiunta di nuovi dispositivi / attori)
-- [ ] definirsi una fingermap di misure per le stanze in cui non abbiamo una stazione
-- [ ] perimetro di misure agli angoli delle stanze
-- [ ] bot telegram
+- [ ] **Se c'è tempo** analyzer : raffinare algoritmo di localizzazione
+- [ ] **Raffinamento** perimetro di misure agli angoli delle stanze
+- [ ] **Raffinamento++** definirsi una fingermap di misure per le stanze in cui non abbiamo una stazione
+- [ ] **MANDATORY** RESTful : scrivere il API servizio (soprattutto pensare alla fase di installazione ed aggiunta di nuovi dispositivi / attori)
+- [ ] **MANDATORY** bot telegram
