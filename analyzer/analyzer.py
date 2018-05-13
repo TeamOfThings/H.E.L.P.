@@ -51,6 +51,10 @@ class DBInterface():
 	def delete_room_entries(self, room):
 		self.__collection.delete_many({"room":room})
 
+	# Delete all the entries in the DB
+	def clean_db(self):
+		self.__collection.delete_many({})
+
 
 	
 

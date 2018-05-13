@@ -5,5 +5,12 @@
     "server-ip" : "192.168.1.78",
     "server-port" : "8080",
     "rooms" : [],
-    "devices" : ["chiara", "luca", "andrea", "nerfgun"]
+    "devices" : ["chiara", "luca", "andrea", "nerfgun"],
+    "DB_connection_params": {
+    		"user": "TeamOfThings",
+            "password": "totproject",
+    		"host": "ds219130.mlab.com",
+    		"port": "19130",
+    		"namespace": "help_db"
+    }
 }
