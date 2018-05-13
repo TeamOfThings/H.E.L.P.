@@ -26,7 +26,18 @@ lock = None
 """
 webApp = Flask(__name__)
 
+"""
+	Instance of the database
+"""
+database = None
+
 class DBInterface():
+	
+	"""
+	Class used to interface with the MongoDB host.
+	A DB entry is seen as a dictionary, so all the query methods return a list of dictionaries.
+	"""
+
 	def __init__(self, __connection_parameters):
 		self.__connection_parameters = __connection_parameters
 		self.__client = MongoClient(
@@ -55,7 +66,17 @@ class DBInterface():
 	def clean_db(self):
 		self.__collection.delete_many({})
 
+	# Retrieve all the entries in the DB
+	def get_all_entries(self):
+		return self.__collection.find({})
 
+	#Retrieve all the entries relative to a specific device
+	def get_device(self, device):
+		return self.__collection.find({"device":device})
+
+	#Retrieve all the entries relative to a specific room
+	def get_room(self, room):
+		return self.__collection.find({"room":room})
 	
 
 
@@ -310,6 +331,7 @@ def main():
 
 	global beaconTable
 	global lock
+	global database
 
 	beaconTable = dict()
 	lock = Lock()
@@ -330,7 +352,7 @@ def main():
 	client.loop_start()
 
 	# Initiate connection with MongoDB
-	db_connection = DBInterface(jsonData["DB_connection_params"])
+	database = DBInterface(jsonData["DB_connection_params"])
 
 	# Activate triangulator thread
 	triangulate = Triangulate(int(jsonData["algorithm-interval"]))
