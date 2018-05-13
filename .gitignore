@@ -2,3 +2,4 @@
 .project
 idea/
 .vscode/
+bot/botoken.json
