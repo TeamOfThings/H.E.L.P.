@@ -16,6 +16,9 @@ from threading import Thread, Lock
 """
 beaconTable = {}
 
+#List of registered rooms
+rooms= []
+
 """
 	Lock
 """
@@ -149,6 +152,11 @@ class Triangulate(Thread):
 
 
 
+
+
+
+
+
 class BeaconInfo():
 	"""
 		Class for a beacon
@@ -156,14 +164,16 @@ class BeaconInfo():
 		Instances:
 			__map: 	a dictionary map <room, measure_list>
 			__id:	Beacon's id
+			__rooms: list of registered rooms 
 			__last:	last room a person was detected
 	"""
 
 
-	def __init__(self, id):
+	def __init__(self, id, rs):
 		self.__map = dict()
 		self.__id = id
 		self.__last = ""
+		self.__rooms= rs
 
 
 	# Getters
@@ -189,6 +199,11 @@ class BeaconInfo():
 		"""
 			Add a received measure from a given room
 		"""
+
+		# Checking if requested room already exists
+		if not room in self.__rooms:
+			print "Room  " + room + "  doesn't exists (NOT REGISTERED!)"
+			return
 
 		if not self.__map.has_key(str(room)):
 			self.__map[str(room)] = []
@@ -236,17 +251,40 @@ def root():
 #####     /rooms
 @webApp.route("/rooms", methods=["GET"])
 def roomsGet():
-    rooms= {}
-    return Response('["list of all rooms"]', status=200, content_type="application/json")
+    return Response(json.dumps(rooms), status=200, content_type="application/json")
 
 #####
 #####     /rooms/<rid>
+@webApp.route("/rooms/<rid>", methods=['GET'])
+def getRooms (rid):
+	if rid == "" : 
+		return Response("Room is empty", status=400, content_type="test/plain")
+	elif not rid in rooms :
+		return Response("Requested room doesn't exists", status=400, content_type="test/plain")
+	else :
+		ls = []
+		# TODO lock beaconTabele!
+		for b in beaconTable :
+			if beaconTable[b].getLast() == rid :
+				ls.append(beaconTable[b].getId())
+		return Response (json.dumps(ls), status=200, content_type="application/json")
+
+
 @webApp.route("/rooms/<rid>", methods=['POST'])
 def postRooms(rid):
-    return Response("Creating room " + rid, status=201, content_type="test/plain")
+	if rid == "" :
+		return Response("Room is empty!", status=400, content_type="test/plain")
+	elif rid in rooms :
+		return Response("Requested room already exists!", status=400, content_type="test/plain")
+	else :
+		print ("Creating room " + rid)
+		#rooms.append(rid)
+		return Response("", status=201, content_type="test/plain")
+
 
 @webApp.route("/rooms/<rid>", methods=['DELETE'])
 def deleteRooms(rid):
+	# TODO
     return Response("Deleting room " + rid, status=200, content_type="test/plain")
 
 #####
@@ -331,13 +369,19 @@ def main():
 
 	global beaconTable
 	global lock
+	global rooms
 	global database
+
 
 	beaconTable = dict()
 	lock = Lock()
 
+	for r in jsonData["rooms"] :
+		rooms.append(r)
+		
 	for b in jsonData["devices"] :
-		beaconTable[b]= BeaconInfo(b)
+		beaconTable[b]= BeaconInfo(b, rooms)
+
 	
 	# Instantiate Broker
 	broker_address = jsonData["broker-ip"]
