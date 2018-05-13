@@ -359,8 +359,8 @@ def postPeople(pid):
 		return Response('', status=200, content_type="text/plain")
 
 
-@webApp.route("/people/<rid>", methods=["DELETE"])
-def deletePeople(rid):
+@webApp.route("/people/<pid>", methods=["DELETE"])
+def deletePeople(pid):
 	if pid == "" :
 		return Response("Beacon id is empty!", status=400, content_type="text/plain")
 	elif not beaconTable.has_key (pid) :
