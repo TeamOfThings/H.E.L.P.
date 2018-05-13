@@ -64,8 +64,9 @@ def getRoom(bot, update, args, chat_data):
     """
 
     try:
-#        room = args[0]
-        r = requests.get('http://192.168.1.78:8080/room')
+        room = args[0]
+        print(room)
+        r = requests.get('http://192.168.1.78:8080/rooms/'+room)
 
         update.message.reply_text(r.text)
 
@@ -90,6 +91,7 @@ def main():
 
     dispatcher.add_handler(CommandHandler("help", help))
     dispatcher.add_handler(CommandHandler("getUser", getUser, pass_args=True, pass_chat_data=True))
+    dispatcher.add_handler(CommandHandler("getRoom", getRoom, pass_args=True, pass_chat_data=True))
 
     dispatcher.add_error_handler(error)
 
