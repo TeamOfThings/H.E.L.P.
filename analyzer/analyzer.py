@@ -128,9 +128,9 @@ class Triangulate(Thread):
 					info[pos]["lis"] = temp_table[bea].getMap()[pos]
 					if l == 0 :
 						# No msg received
-						info[pos]["mean"] = float("inf")
-						info[pos]["var"] = float("inf")
-						info[pos]["len"] = float("inf")
+						info[pos]["mean"] = float("-inf")
+						info[pos]["var"] = float("-inf")
+						info[pos]["len"] = float("-inf")
 					else:
 						info[pos]["mean"] = s / l
 						info[pos]["var"] = float(np.var(info[pos]["lis"]))
@@ -147,8 +147,7 @@ class Triangulate(Thread):
 				
 				if stanza != "":
 					beaconTable[bea].setLast(stanza)
-				
-				print(beaconTable[bea].getLast())
+					print(beaconTable[bea].getLast())
 
 
 
