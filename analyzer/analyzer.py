@@ -5,6 +5,9 @@ import json
 import numpy as np
 import sys
 import copy
+import pymongo
+import pymongo.collection
+from pymongo import MongoClient
 from flask import Flask, abort, Response, request
 from threading import Thread, Lock
 
@@ -22,6 +25,35 @@ lock = None
     Instance of web-server
 """
 webApp = Flask(__name__)
+
+class DBInterface():
+	def __init__(self, __connection_parameters):
+		self.__connection_parameters = __connection_parameters
+		self.__client = MongoClient(
+    		'mongodb://{user}:{password}@{host}:'
+   			'{port}/{namespace}'.format(**self.__connection_parameters)
+		)
+		self.__collection = self.__client["help_db"]["LocalizationResults"]
+
+	# Insert a new entry in the database
+	def insert_db_entry(self, device, location):
+		self.__collection.insert_one({"device":device, "room":location})
+
+	# Delete a specific DB entry
+	def delete_db_entry(self, device, location):
+		self.__collection.delete_one({"device":device, "room":location})
+
+	# Delete all the entries relative to a specific device
+	def delete_device_entries(self, device):
+		self.__collection.delete_many({"device":device})
+
+	# Delete all the entries relative to a specific room
+	def delete_room_entries(self, room):
+		self.__collection.delete_many({"room":room})
+
+
+	
+
 
 
 class Triangulate(Thread):
@@ -292,6 +324,9 @@ def main():
 	client.subscribe(topic)
 	client.on_message=on_message
 	client.loop_start()
+
+	# Initiate connection with MongoDB
+	db_connection = DBInterface(jsonData["DB_connection_params"])
 
 	# Activate triangulator thread
 	triangulate = Triangulate(int(jsonData["algorithm-interval"]))
