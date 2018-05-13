@@ -258,44 +258,73 @@ def roomsGet():
 @webApp.route("/rooms/<rid>", methods=['GET'])
 def getRooms (rid):
 	if rid == "" : 
-		return Response("Room is empty", status=400, content_type="test/plain")
+		return Response("Room is empty", status=400, content_type="text/plain")
 	elif not rid in rooms :
-		return Response("Requested room doesn't exists", status=400, content_type="test/plain")
+		return Response("Requested room doesn't exists", status=400, content_type="text/plain")
 	else :
 		ls = []
-		# TODO lock beaconTabele!
+		lock.acquire (True)
 		for b in beaconTable :
 			if beaconTable[b].getLast() == rid :
 				ls.append(beaconTable[b].getId())
+		lock.release()
 		return Response (json.dumps(ls), status=200, content_type="application/json")
 
 
 @webApp.route("/rooms/<rid>", methods=['POST'])
 def postRooms(rid):
 	if rid == "" :
-		return Response("Room is empty!", status=400, content_type="test/plain")
+		return Response("Room is empty!", status=400, content_type="text/plain")
 	elif rid in rooms :
-		return Response("Requested room already exists!", status=400, content_type="test/plain")
+		return Response("Requested room already exists!", status=400, content_type="text/plain")
 	else :
-		print ("Creating room " + rid)
-		#rooms.append(rid)
-		return Response("", status=201, content_type="test/plain")
+		#print ("Creating room " + rid)
+		rooms.append(rid)
+		return Response("", status=201, content_type="text/plain")
 
 
 @webApp.route("/rooms/<rid>", methods=['DELETE'])
 def deleteRooms(rid):
-	# TODO
-    return Response("Deleting room " + rid, status=200, content_type="test/plain")
+	if rid == "" :
+		return Response("Room name is empty!", status=400, content_type="text/plain")
+	elif not rid in rooms :
+		return Response("Room name  " + rid + "  doesn't exist!", status=400, content_type="text/plain")
+	else :
+		lock.acquire(True)
+		rooms.remove (rid)
+		for b in beaconTable :
+			bo = beaconTable[b]
+			if bo.getLast() == rid :
+				bo.setLast("")
+		lock.release ()
+		return Response("", status=200, content_type="text/plain")
 
 #####
 #####     /readings/<bid>
 @webApp.route("/readings/<bid>", methods=['GET'])
 def getReadings(bid):
-    return Response("Retrieving all readings about a beacon grouped by rooms (json object of json array)", status=200, content_type="test/plain")
+	if bid == "" :
+		return Response("Beacon id is empty!", status=400, content_type="text/plain")
+	elif not beaconTable.has_key(bid) :
+		return Response("Beacon id  " + bid + "  doesn't exist!", status=400, content_type="text/plain")
+	else :
+		lock.acquire(True)
+		res= json.dumps(beaconTable[bid].getMap())
+		lock.release ()
+		return Response(res, status=200, content_type="application/javascript")
+
 
 @webApp.route("/readings/<bid>", methods=['DELETE'])
 def deleteReadings(bid):
-    return Response("Deleting readings for " + bid, status=200, content_type="test/plain")
+	if bid == "" :
+		return Response("Beacon id is empty!", status=400, content_type="text/plain")
+	elif not beaconTable.has_key(bid) :
+		return Response("Beacon id  " + bid + "  doesn't exist!", status=400, content_type="text/plain")
+	else :
+		lock.acquire(True)
+		beaconTable[bid].cleanInfo()
+		lock.release ()
+		return Response("", status=200, content_type="text/plain")
 
 
 #####
@@ -315,9 +344,33 @@ def getPeopleLocations():
 #####     /people/<rid>
 @webApp.route("/people/<rid>", methods=["GET"])
 def getPeople(rid):
-    return Response('["list of people in a room"]', status=200, content_type="application/json")
+    return Response('["TODO list of people in a room"]', status=200, content_type="application/json")
 
-# TODO: metodi API REST per  aggiungere e rimuovere beacon
+
+@webApp.route("/people/<pid>", methods=["POST"])
+def postPeople(pid):
+	if pid == "" :
+		return Response("Beacon id is empty!", status=400, content_type="text/plain")
+	elif beaconTable.has_key (pid) :
+		return Response("Beacon with id  " + pid + "  already exists!", status=400, content_type="text/plain")
+	else :
+		lock.acquire(True)
+		beaconTable[pid]= BeaconInfo(pid, rooms)		
+		lock.release ()
+		return Response('', status=200, content_type="text/plain")
+
+
+@webApp.route("/people/<rid>", methods=["DELETE"])
+def deletePeople(rid):
+	if pid == "" :
+		return Response("Beacon id is empty!", status=400, content_type="text/plain")
+	elif not beaconTable.has_key (pid) :
+		return Response("Beacon with id  ' + pid + '  doesn't exist!", status=400, content_type="text/plain")
+	else :
+		lock.acquire(True)
+		beaconTable.pop(pid)
+		lock.release ()
+		return Response('', status=200, content_type="application/json")
 
 
 
@@ -336,7 +389,8 @@ def on_message(client, userdata, message):
 	lock.acquire(True)
 
 	for b in jsonMsg["map"] :
-		beaconTable[b].addMeasure(jsonMsg["position"],  jsonMsg["map"][b])
+		if beaconTable.has_key(b) :
+			beaconTable[b].addMeasure(jsonMsg["position"],  jsonMsg["map"][b])
 		
 	lock.release()
 	"""
