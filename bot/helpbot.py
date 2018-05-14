@@ -34,9 +34,9 @@ def help(bot, update):
 
     startText = 'Hi! I am L.U.C.A. bot\n' \
                 'Commands:\n' \
-                '/getRoom <room> to see who is in that room' \
-                '/getUser <user> to see in which room is the user' \
-                '/help to display this message again'
+                '/getRoom <room> to see who is in that room.\n' \
+                '/getUser <user> to see in which room is the user.\n' \
+                '/help to display this message again.\n'
 
     update.message.reply_text(startText)
 

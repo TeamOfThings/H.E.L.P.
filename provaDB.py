@@ -56,23 +56,7 @@ class DBInterface():
 def main():
     db = DBInterface(connection_params)
 
-    db.clean_db()
-
-    db.insert_db_entry("chiara", "Bache")
-    db.insert_db_entry("andrea", "camera")
-    db.insert_db_entry("luca", "cucina")
-    db.insert_db_entry("chiara", "bagno")
-    db.insert_db_entry("nerfgun", "camera")
-
-    for doc in db.get_device("chiara"):
-        print(doc["room"])
-
-    print("\n")
-
-    for doc in db.get_room("camera"):
-        print(doc)
-
-    
+    db.clean_db()    
 
 if __name__ == "__main__":
 	main()
