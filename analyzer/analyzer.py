@@ -7,6 +7,7 @@ import sys
 import copy
 import pymongo
 import pymongo.collection
+import signal
 from pymongo import MongoClient
 from flask import Flask, abort, Response, request
 from threading import Thread, Lock
@@ -16,18 +17,36 @@ from threading import Thread, Lock
 """
 beaconTable = {}
 
-#List of registered rooms
+# List of registered rooms
 rooms= []
 
-"""
-	Lock
-"""
-lock = None
+# Content of configuration file
+configFileContent = {}
+
+# Mutex for beaconTable
+beaconTableLocker = None
+
+# Mutex for configFileContent
+configFCLocker = None
+
+# Configuration file name
+configFileName = ""
 
 """
     Instance of web-server
 """
 webApp = Flask(__name__)
+
+
+
+# Function to save configFileContent to to the file
+def  storeConfigurationFile () :
+	print ("Saving configuration to " + configFileName)
+	f= open(configFileName+"_", 'w')
+	json.dump (configFileContent, f)
+	f.close()
+
+
 
 class DBInterface():
 	def __init__(self, __connection_parameters):
@@ -81,14 +100,14 @@ class Triangulate(Thread):
 		while(True):
 			time.sleep(self.__time)
 
-			lock.acquire(True)
+			beaconTableLocker.acquire(True)
 			# copy of the current beacon table
 			temp_table = copy.deepcopy(beaconTable)
 			# beacon table reset
 			for b in beaconTable :
 				beaconTable[b].cleanInfo()
 
-			lock.release()
+			beaconTableLocker.release()
 
 			for bea in temp_table :
 				# For each beacon
@@ -242,41 +261,56 @@ def getRooms (rid):
 		return Response("Requested room doesn't exists", status=400, content_type="text/plain")
 	else :
 		ls = []
-		lock.acquire (True)
+		beaconTableLocker.acquire (True)
+		# Searching all people in a required room
 		for b in beaconTable :
 			if beaconTable[b].getLast() == rid :
 				ls.append(beaconTable[b].getId())
-		lock.release()
+		beaconTableLocker.release()
 		return Response (json.dumps(ls), status=200, content_type="application/json")
 
 
 @webApp.route("/rooms/<rid>", methods=['POST'])
 def postRooms(rid):
+	toRet= None
+	configFCLocker.acquire(True)
 	if rid == "" :
-		return Response("Room is empty!", status=400, content_type="text/plain")
+		toRet= Response("Room is empty!", status=400, content_type="text/plain")
 	elif rid in rooms :
-		return Response("Requested room already exists!", status=400, content_type="text/plain")
+		toRet= Response("Requested room already exists!", status=400, content_type="text/plain")
 	else :
 		#print ("Creating room " + rid)
 		rooms.append(rid)
-		return Response("", status=201, content_type="text/plain")
+		configFileContent["rooms"].append(rid)
+		storeConfigurationFile ()
+		toRet= Response("", status=201, content_type="text/plain")
+	configFCLocker.release()
+	return toRet
 
 
 @webApp.route("/rooms/<rid>", methods=['DELETE'])
 def deleteRooms(rid):
+	toRet= None
+	configFCLocker.acquire(True)
 	if rid == "" :
-		return Response("Room name is empty!", status=400, content_type="text/plain")
+		toRet= Response("Room name is empty!", status=400, content_type="text/plain")
 	elif not rid in rooms :
-		return Response("Room name  " + rid + "  doesn't exist!", status=400, content_type="text/plain")
+		toRet= Response("Room name  " + rid + "  doesn't exist!", status=400, content_type="text/plain")
 	else :
-		lock.acquire(True)
+		beaconTableLocker.acquire(True)
 		rooms.remove (rid)
+		configFileContent["rooms"].remove(rid)
+		storeConfigurationFile ()
+		
 		for b in beaconTable :
 			bo = beaconTable[b]
 			if bo.getLast() == rid :
 				bo.setLast("")
-		lock.release ()
-		return Response("", status=200, content_type="text/plain")
+		beaconTableLocker.release ()
+		toRet= Response("", status=200, content_type="text/plain")
+	configFCLocker.release()
+	return toRet
+
 
 #####
 #####     /readings/<bid>
@@ -287,9 +321,9 @@ def getReadings(bid):
 	elif not beaconTable.has_key(bid) :
 		return Response("Beacon id  " + bid + "  doesn't exist!", status=400, content_type="text/plain")
 	else :
-		lock.acquire(True)
+		beaconTableLocker.acquire(True)
 		res= json.dumps(beaconTable[bid].getMap())
-		lock.release ()
+		beaconTableLocker.release ()
 		return Response(res, status=200, content_type="application/javascript")
 
 
@@ -300,9 +334,9 @@ def deleteReadings(bid):
 	elif not beaconTable.has_key(bid) :
 		return Response("Beacon id  " + bid + "  doesn't exist!", status=400, content_type="text/plain")
 	else :
-		lock.acquire(True)
+		beaconTableLocker.acquire(True)
 		beaconTable[bid].cleanInfo()
-		lock.release ()
+		beaconTableLocker.release ()
 		return Response("", status=200, content_type="text/plain")
 
 
@@ -312,9 +346,11 @@ def deleteReadings(bid):
 def getPeopleLocations():
 
 	people = dict()
+	beaconTableLocker.acquire (True)
 	for b in beaconTable:
 		if not beaconTable[b].getLast() == "":
 			people[b] = str(beaconTable[b].getLast())
+	beaconTableLocker.release()
 	print(people)
 	return Response(json.dumps(people), status=200, content_type="application/json")
 
@@ -328,28 +364,38 @@ def getPeople(rid):
 
 @webApp.route("/people/<pid>", methods=["POST"])
 def postPeople(pid):
+	toRet= None
+	configFCLocker.acquire(True)
+	beaconTableLocker.acquire(True)
 	if pid == "" :
-		return Response("Beacon id is empty!", status=400, content_type="text/plain")
+		toRet= Response("Beacon id is empty!", status=400, content_type="text/plain")
 	elif beaconTable.has_key (pid) :
-		return Response("Beacon with id  " + pid + "  already exists!", status=400, content_type="text/plain")
+		toRet= Response("Beacon with id  " + pid + "  already exists!", status=400, content_type="text/plain")
 	else :
-		lock.acquire(True)
-		beaconTable[pid]= BeaconInfo(pid, rooms)		
-		lock.release ()
-		return Response('', status=200, content_type="text/plain")
+		beaconTable[pid]= BeaconInfo(pid, rooms)
+		configFileContent["devices"].append(pid)
+		storeConfigurationFile()
+		toRet= Response('', status=200, content_type="text/plain")
+	beaconTableLocker.release()
+	configFCLocker.release()
+	return toRet
 
 
 @webApp.route("/people/<rid>", methods=["DELETE"])
 def deletePeople(rid):
+	toRet= None
+	configFCLocker.acquire(True)
+	beaconTableLocker.acquire(True)
 	if pid == "" :
-		return Response("Beacon id is empty!", status=400, content_type="text/plain")
+		toRet= Response("Beacon id is empty!", status=400, content_type="text/plain")
 	elif not beaconTable.has_key (pid) :
-		return Response("Beacon with id  ' + pid + '  doesn't exist!", status=400, content_type="text/plain")
+		toRet= Response("Beacon with id  ' + pid + '  doesn't exist!", status=400, content_type="text/plain")
 	else :
-		lock.acquire(True)
 		beaconTable.pop(pid)
-		lock.release ()
-		return Response('', status=200, content_type="application/json")
+		toRet= Response('', status=200, content_type="application/json")
+	beaconTableLocker.release()
+	configFCLocker.release()
+	return toRet
 
 
 
@@ -365,13 +411,13 @@ def on_message(client, userdata, message):
 
 	jsonMsg = json.loads(message.payload.decode("utf-8"))
 
-	lock.acquire(True)
+	beaconTableLocker.acquire(True)
 
 	for b in jsonMsg["map"] :
 		if beaconTable.has_key(b) :
 			beaconTable[b].addMeasure(jsonMsg["position"],  jsonMsg["map"][b])
 		
-	lock.release()
+	beaconTableLocker.release()
 	"""
 		forma del payload
 		{
@@ -396,27 +442,33 @@ def main():
 	if len(sys.argv) != 2 :
 		sys.exit("Wrong number of arguments!\n\tExiting")
 
-	print ("Initializing server")
-	jsonData = json.load(open(sys.argv[1]))
-	#print(json.dumps(jsonData))
-
 	global beaconTable
-	global lock
+	global beaconTableLocker
 	global rooms
+	global configFileContent
+	global configFCLocker
+	global configFileName
+
+
+	print ("Initializing server")
+	configFileName= sys.argv[1]
+	configFileContent = json.load(open(configFileName))
+	#print(json.dumps(configFileContent))
 
 	beaconTable = dict()
-	lock = Lock()
+	beaconTableLocker = Lock()
+	configFCLocker= Lock()
 
-	for r in jsonData["rooms"] :
+	for r in configFileContent["rooms"] :
 		rooms.append(r)
 		
-	for b in jsonData["devices"] :
+	for b in configFileContent["devices"] :
 		beaconTable[b]= BeaconInfo(b, rooms)
 
 	
 	# Instantiate Broker
-	broker_address = jsonData["broker-ip"]
-	topic = jsonData["topic"]
+	broker_address = configFileContent["broker-ip"]
+	topic = configFileContent["topic"]
 
 	print ("Init broker")
 
@@ -427,18 +479,19 @@ def main():
 	client.loop_start()
 
 	# Initiate connection with MongoDB
-	db_connection = DBInterface(jsonData["DB_connection_params"])
+	db_connection = DBInterface(configFileContent["DB_connection_params"])
 
 	# Activate triangulator thread
-	triangulate = Triangulate(int(jsonData["algorithm-interval"]))
+	triangulate = Triangulate(int(configFileContent["algorithm-interval"]))
 	triangulate.daemon = True
 	triangulate.start()
 
     # Activating web-server thread
-	webServer= WebServer(webApp, jsonData["server-ip"], int(jsonData["server-port"]))
+	webServer= WebServer(webApp, configFileContent["server-ip"], int(configFileContent["server-port"]))
 	webServer.daemon = True
 	webServer.start()
 
+	
 	print ("Starting loop")
 
 	while True:
