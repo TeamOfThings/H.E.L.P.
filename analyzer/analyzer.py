@@ -298,6 +298,7 @@ def deleteRooms(rid):
 			if bo.getLast() == rid :
 				bo.setLast("")
 		lock.release ()
+		database.delete_room_entries(rid)
 		return Response("", status=200, content_type="text/plain")
 
 #####
@@ -371,6 +372,7 @@ def deletePeople(pid):
 		lock.acquire(True)
 		beaconTable.pop(pid)
 		lock.release ()
+		database.delete_device_entries(pid)
 		return Response('', status=200, content_type="application/json")
 
 
