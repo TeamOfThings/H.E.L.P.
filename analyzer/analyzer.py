@@ -147,7 +147,8 @@ class Triangulate(Thread):
 				
 				if stanza != "":
 					beaconTable[bea].setLast(stanza)
-					print(beaconTable[bea].getLast())
+				
+				print(bea + " - " + beaconTable[bea].getLast() + "\n\n")
 
 
 
