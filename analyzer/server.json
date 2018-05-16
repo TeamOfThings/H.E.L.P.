@@ -2,7 +2,7 @@
     "broker-ip" : "192.168.1.78",
     "topic" : "update/sensors",
     "algorithm-interval" : "5",
-    "server-ip" : "192.168.1.81",
+    "server-ip" : "192.168.1.78",
     "server-port" : "8080",
     "rooms" : ["cucina", "camera", "Bache"],
     "devices" : ["chiara", "luca", "andrea", "nerfgun"],
