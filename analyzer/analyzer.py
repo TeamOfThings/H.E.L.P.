@@ -147,6 +147,7 @@ class Triangulate(Thread):
 				
 				if stanza != "":
 					beaconTable[bea].setLast(stanza)
+					database.insert_db_entry(bea, stanza)
 				
 				print(bea + " - " + beaconTable[bea].getLast() + "\n\n")
 
