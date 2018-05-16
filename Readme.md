@@ -33,3 +33,4 @@
 - [ ] **Raffinamento++** definirsi una fingermap di misure per le stanze in cui non abbiamo una stazione
 - [ ] **MANDATORY** RESTful : scrivere il API servizio (soprattutto pensare alla fase di installazione ed aggiunta di nuovi dispositivi / attori)
 - [ ] **MANDATORY** bot telegram
+- [ ] **BOT** aggiungere command list da BotFather
