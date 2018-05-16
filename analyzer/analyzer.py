@@ -509,7 +509,7 @@ def main():
 	client.loop_start()
 
 	# Initiate connection with MongoDB
-	database = DBInterface(jsonData["DB_connection_params"])
+	database = DBInterface(configFileContent["DB_connection_params"])
 
 	# Activate triangulator thread
 	triangulate = Triangulate(int(configFileContent["algorithm-interval"]))
