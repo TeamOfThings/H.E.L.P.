@@ -170,7 +170,9 @@ class Triangulate(Thread):
 					beaconTable[bea].setLast(stanza)
 					database.insert_db_entry(bea, stanza)
 				
-				print(bea + " - " + beaconTable[bea].getLast() + "\n\n")
+					print(bea + " - " + beaconTable[bea].getLast() + " :: " + str(info[pos]["lis"]) + " mean : " + str(info[pos]["mean"]))
+
+			print("---------------------------------------------")
 
 
 
