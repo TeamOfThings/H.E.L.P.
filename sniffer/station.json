@@ -1,5 +1,4 @@
 {
-  "position": "camera",
   "id": "dd03f",
   "devices": [
     {
@@ -20,7 +19,8 @@
     }
   ],
   "broker-ip": "192.168.1.78",
-  "topic": "update/sensors",
+  "publish_topic": "update/sensors",
+  "subscribe_topic": "update/stations",
   "scan_interval": "0.5",
   "send-interval" : "5"
 }

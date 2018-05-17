@@ -1,7 +1,7 @@
 # Usage : sudo python ./sniffer.py <configuration.json>
 
 from bluepy.btle import Scanner, DefaultDelegate
-import paho.mqtt.client
+import paho.mqtt.client as mqtt
 import paho.mqtt.publish as publisher
 import time
 import json
@@ -13,7 +13,8 @@ stationId       = ""
 position        = ""
 devicesArray    = []
 brokerIP        = "127.0.0.1"
-topic           = ""
+pubTopic           = ""
+subTopic           = ""
 scanInterval    = "1"
 
 
@@ -39,9 +40,6 @@ class ScanDelegate(DefaultDelegate):
         for e in devicesArray:
             if e["mac"] == dev.addr:
                 self.__sender.addMeasurement(e["name"], dev.rssi)
-#                payload = buildStringPayload(e["name"], dev.rssi)
-#                print payload
-#                publisher.single(topic, payload, hostname=brokerIP)
 
 
 
@@ -69,7 +67,7 @@ class Sender(Thread):
             time.sleep(self.__time)
             payload = self.__buildPayload(self.__map)
             print payload
-            publisher.single(topic, payload, hostname=brokerIP)
+            publisher.single(pubTopic, payload, hostname=brokerIP)
             self.__map = {} # reset map
             
 
@@ -83,11 +81,27 @@ class Sender(Thread):
     def __buildPayload(self, map):
         payload = {}
         payload["station-id"] = str(stationId)
-        payload["position"] = str(position)
         payload["map"] = map
 
         return json.dumps(payload)
         
+
+
+def on_message(client, userdata, message):
+	"""
+		Broker callback once a msg is received
+	"""
+
+	jsonMsg = json.loads(message.payload.decode("utf-8"))
+    # Update my data
+        # I receive a new pair <user - beaconMAC>
+    userName = jsonMsg["name"]
+    userMAC = jsonMsg["mac"]
+
+
+def on_connect(client, userdata, flags, rc):
+    print('connected')
+
 
 def main():
     """
@@ -116,18 +130,25 @@ def main():
     #####*****#####
 
     global stationId
-    global position
     global devicesArray
     global brokerIP
-    global topic
+    global pubTopic
+    global subTopic
     global scanInterval
 
     stationId    = json_data["id"]
-    position     = json_data["position"]
     devicesArray = json_data["devices"]
     brokerIP     = json_data["broker-ip"]
-    topic        = json_data["topic"]
+    pubTopic     = json_data["publish_topic"]
+    subTopic     = json_data["subscribe_topic"]
     scanInterval = float(json_data["scan_interval"])
+
+    # Listen to MQTT server's messages
+    client = mqtt.Client("P1")
+    client.connect(brokerIP)
+    client.subscribe(subTopic)
+    client.on_message=on_message
+    client.loop_start()
 
     # Start the routine sending the data to the server
     rssiSender.start()
@@ -135,13 +156,6 @@ def main():
     # Start scanning
     while (True):
         devices = scanner.scan(scanInterval)
-        
-
-
-
-def on_connect(client, userdata, flags, rc):
-    print('connected')
-
 
 
 if __name__ == "__main__":
