@@ -52,12 +52,13 @@ def getImage(bot, update):
             if len(text) == 0:
                 update.message.reply_text("No QR code found!")
             else:
-                last_address = text[-1].data
+                mac_address = text[-1].data
                 name = update.message.caption
-                r = requests.post('http://192.168.1.78:8080/people/'+name)
+
+                r = requests.post('http://192.168.1.81:8080/people/'+name, data=mac_address)
 
                 if r.status_code == OKPOST:
-                    update.message.reply_text("User "+name+" associated to Mac Address "+last_address)
+                    update.message.reply_text("User "+name+" associated to Mac Address "+mac_address)
                 else :
                     update.message.reply_text("Connection error ")
 
@@ -108,7 +109,7 @@ def getUser(bot, update, args, chat_data):
 
     try:
         user = args[0]
-        req = requests.get('http://192.168.1.78:8080/people')
+        req = requests.get('http://192.168.1.81:8080/people')
 
         if(req.status_code == OKGET):
             txt = user + " not at home"
