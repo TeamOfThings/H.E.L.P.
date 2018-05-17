@@ -54,7 +54,12 @@ def getImage(bot, update):
             else:
                 last_address = text[-1].data
                 name = update.message.caption
-                update.message.reply_text('Decoded message is: '+last_address+"\n\n"+"User "+name+" associated to Mac Address "+last_address)
+                r = requests.post('http://192.168.1.78:8080/people/'+name)
+
+                if r.status_code == OKPOST:
+                    update.message.reply_text("User "+name+" associated to Mac Address "+last_address)
+                else :
+                    update.message.reply_text("Connection error ")
 
     except (IndexError, ValueError):
         update.message.reply_text('Inserire messaggio di errore')
@@ -202,8 +207,7 @@ def getRoom(bot, update, args, chat_data):
 
 #######################################   POST   #######################################
 
-########## NEW User
-#FIXME da eliminare perché sostituita da getImage (scansione qr code ecc)
+########## NEW User ########
 def addUser(bot, update, args):
     """
         Add a user to the system 
