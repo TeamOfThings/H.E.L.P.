@@ -436,14 +436,13 @@ def postPeople(pid):
 		brokerAddress = configFileContent["broker-ip"]
 		publisher.single (pubTopic, json.dumps(payload), hostname=brokerAddress)
 
-		toRet= Response('', status=200, content_type="text/plain")
+		toRet= Response('', status=201, content_type="text/plain")
 	beaconTableLocker.release()
 	configFCLocker.release()
 	return toRet
 
 
 
-# FIXME
 @webApp.route("/people/<pid>", methods=["DELETE"])
 def deletePeople(pid):
 	toRet= None
@@ -457,6 +456,16 @@ def deletePeople(pid):
 	else :
 		beaconTable.pop(pid)
 		database.delete_device_entries(pid)
+		storeConfigurationFile()
+		
+		# Deleting person
+		payload = {
+			"action" : "delete",
+			"name" : pid,
+		}
+		brokerAddress = configFileContent["broker-ip"]
+		publisher.single (pubTopic, json.dumps(payload), hostname=brokerAddress)
+
 		toRet= Response('', status=200, content_type="application/json")
 	beaconTableLocker.release()
 	configFCLocker.release()
@@ -540,7 +549,8 @@ def main():
 
 	client = mqtt.Client("P1")
 	client.connect(broker_address)
-	client.subscribe(subTopic)
+	print ("Subscription to " + broker_address + " on topic " + subTopic)
+	client.subscribe(subTopic, qos=2)
 	client.on_message=on_message
 	client.loop_start()
 
