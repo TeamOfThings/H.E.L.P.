@@ -19,6 +19,10 @@ scanInterval    = "1"
 
 devLock            = None
 
+## Se c'è tempo
+# TODO magari rimuovere informazione user - mac e lasciare solo mac nelle stazioni;
+# la mappa poi la fa il server 
+
 ############################## Classes ##############################
 
 class ScanDelegate(DefaultDelegate):
@@ -114,7 +118,7 @@ def on_message(client, userdata, message):
         devicesArray.remove(tmp)
         dumpToFile()
 
-    else if action == "add":
+    elif action == "add":
         # Add pair
         userMAC = jsonMsg["mac"]
         tmp = dict()
@@ -125,7 +129,7 @@ def on_message(client, userdata, message):
 
     else :
         print("Invalid code")
-        
+
     devLock.release()
 
 def on_connect(client, userdata, flags, rc):
