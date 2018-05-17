@@ -19,7 +19,6 @@ scanInterval    = "1"
 
 devLock            = None
 
-## Se c'è tempo
 # TODO magari rimuovere informazione user - mac e lasciare solo mac nelle stazioni;
 # la mappa poi la fa il server 
 
