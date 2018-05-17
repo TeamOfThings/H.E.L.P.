@@ -23,7 +23,6 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 # HTTP Status code
 OKGET = 200
 OKPOST = 201
@@ -34,18 +33,28 @@ def error(bot, update, error):
     logger.warning('Update "%s" caused error "%s"', update, error)
 
 
-
 #### MESSAGES ####
-# TODO
+# TODO fare la post di utente e mac address
 def getImage(bot, update):
 
     try:
         if update.message.photo is None:
             update.message.reply_text('no foto')
+        elif update.message.caption is None:
+            update.message.reply_text("Missing caption")
         else:
-            text = decode(Image.open(sys.argv[1]))
-            #print(text[-1].data)
-            update.message.reply_text('Content: '+text[-1].data)
+            img_id = update.message.photo[-1].file_id
+            newFile = bot.get_file(img_id)
+            newFile.download('qrcode.png')
+
+            text = decode(Image.open("qrcode.png"))
+            
+            if len(text) == 0:
+                update.message.reply_text("No QR code found!")
+            else:
+                last_address = text[-1].data
+                name = update.message.caption
+                update.message.reply_text('Decoded message is: '+last_address+"\n\n"+"User "+name+" associated to Mac Address "+last_address)
 
     except (IndexError, ValueError):
         update.message.reply_text('Inserire messaggio di errore')
@@ -70,6 +79,7 @@ def help(bot, update):
                 '\n'\
                 'Maybe do you want me to add some new things to your system?\n' \
                 'Commands:\n' \
+                'If you want to add a new user send me a picture of the QR code on the device that you want to associate with that user and specify in the caption the name of the new user.\n'\
                 '/addUser <newUser> to add a new user in your system;\n' \
                 '/addRoom <newRoom> to add a new room in your system;\n' \
                 '\n'\
@@ -295,6 +305,8 @@ def deleteRoom(bot, update, args):
 
 
 def main():
+    global waiting_for_name
+    global last_address
 
     if len(sys.argv) != 2 :
         sys.exit("Wrong number of arguments!\n\tExiting")
@@ -304,6 +316,9 @@ def main():
     helpbot=jsonData["token"]
     updater = Updater(helpbot)
     dispatcher = updater.dispatcher
+
+    waiting_for_name = False
+    last_address = None
 
     # Add commands to the bot
     dispatcher.add_handler(CommandHandler("start", help))
