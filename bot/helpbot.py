@@ -15,6 +15,10 @@ from telegram.ext import InlineQueryHandler
 import logging, sys, json
 import requests
 
+from pyzbar.pyzbar import decode
+from PIL import Image
+
+
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -33,13 +37,15 @@ def error(bot, update, error):
 
 #### MESSAGES ####
 # TODO
-def phot(bot, update):
+def getImage(bot, update):
 
     try:
         if update.message.photo is None:
             update.message.reply_text('no foto')
         else:
-            update.message.reply_text('una foto')
+            text = decode(Image.open(sys.argv[1]))
+            #print(text[-1].data)
+            update.message.reply_text('Content: '+text[-1].data)
 
     except (IndexError, ValueError):
         update.message.reply_text('Inserire messaggio di errore')
@@ -315,7 +321,7 @@ def main():
     dispatcher.add_handler(CommandHandler("deleteRoom", deleteRoom, pass_args=True))
 
     # Handler for messages which are a photo
-    dispatcher.add_handler(MessageHandler(Filters.photo, phot))
+    dispatcher.add_handler(MessageHandler(Filters.photo, getImage))
 
     dispatcher.add_error_handler(error)
 
