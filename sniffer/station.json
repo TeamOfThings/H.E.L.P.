@@ -22,5 +22,5 @@
   "publish_topic": "update/sensors",
   "subscribe_topic": "update/stations",
   "scan_interval": "0.5",
-  "send-interval" : "5"
+  "send_interval" : "5"
 }

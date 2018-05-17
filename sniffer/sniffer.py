@@ -6,17 +6,20 @@ import paho.mqtt.publish as publisher
 import time
 import json
 import sys
-from threading import Thread
+from threading import Thread, Lock
 
 # Global Variables, init with default value
 stationId       = ""
 position        = ""
 devicesArray    = []
 brokerIP        = "127.0.0.1"
-pubTopic           = ""
-subTopic           = ""
+pubTopic        = ""
+subTopic        = ""
 scanInterval    = "1"
 
+devLock            = None
+
+############################## Classes ##############################
 
 class ScanDelegate(DefaultDelegate):
     """
@@ -37,10 +40,13 @@ class ScanDelegate(DefaultDelegate):
             handler after discovered new device
         """
 
+        devLock.acquire(True)
+
         for e in devicesArray:
             if e["mac"] == dev.addr:
                 self.__sender.addMeasurement(e["name"], dev.rssi)
 
+        devLock.release()
 
 
 class Sender(Thread):
@@ -50,10 +56,6 @@ class Sender(Thread):
         Instances:
             __time:	time to wait before sending data
             __map:  the map <beacon, measure_list>
-
-        Doing in this way, instead of sending an rssi as soon as we get it, the logic becomes more complex:
-        the station needs to store the entire list of sniffed rssis, and these can come from different beacons;
-        so that's why the station needs a map and should send it. The server should, then, unpack it
     """
 
     def __init__(self, time):
@@ -86,22 +88,70 @@ class Sender(Thread):
         return json.dumps(payload)
         
 
+############################## MQTT callbacks ##############################
 
 def on_message(client, userdata, message):
-	"""
-		Broker callback once a msg is received
-	"""
+    """
+        Broker callback once a msg is received
+    """
 
-	jsonMsg = json.loads(message.payload.decode("utf-8"))
-    # Update my data
-        # I receive a new pair <user - beaconMAC>
+    jsonMsg = json.loads(message.payload.decode("utf-8"))
+
+    action = jsonMsg["action"]
     userName = jsonMsg["name"]
-    userMAC = jsonMsg["mac"]
 
+    devLock.acquire(True)
+
+    if action == "delete":
+        # Remove pair
+        tmp = dict()
+        for dev in devicesArray:
+            if dev["name"] == userName:
+                tmp["name"] = userName
+                tmp["mac"] = dev["mac"]
+                break
+
+        devicesArray.remove(tmp)
+        dumpToFile()
+
+    else if action == "add":
+        # Add pair
+        userMAC = jsonMsg["mac"]
+        tmp = dict()
+        tmp["name"] = userName
+        tmp["mac"] = userMAC
+        devicesArray.append(tmp)
+        dumpToFile()
+
+    else :
+        print("Invalid code")
+        
+    devLock.release()
 
 def on_connect(client, userdata, flags, rc):
     print('connected')
 
+
+############################## HELPERS ##############################
+
+def dumpToFile():
+    """
+        Update the file station.json
+    """
+    data = dict()
+    data["id"] = stationId
+    data["devices"] = devicesArray
+    data["broker_ip"] = brokerIP
+    data["publish_topic"] = pubTopic
+    data["subscribe_topic"] = subTopic
+    data["scan_interval"] = scanInterval
+    data["send_interval"] = sendInterval
+
+    with open('station.json', 'w') as outfile:
+        json.dump(data, outfile)
+
+
+############################## MAIN ##############################
 
 def main():
     """
@@ -120,11 +170,6 @@ def main():
     print ("Initializing station")
     json_data = json.load(open(sys.argv[1]))
 
-    rssiSender = Sender(float(json_data["send-interval"]))
-    rssiSender.daemon = True
-
-    scanner = Scanner().withDelegate(ScanDelegate(rssiSender))
-
 
     #####*****#####
     #####*****#####
@@ -135,13 +180,19 @@ def main():
     global pubTopic
     global subTopic
     global scanInterval
+    global sendInterval
+
+    global devLock
 
     stationId    = json_data["id"]
     devicesArray = json_data["devices"]
-    brokerIP     = json_data["broker-ip"]
+    brokerIP     = json_data["broker_ip"]
     pubTopic     = json_data["publish_topic"]
     subTopic     = json_data["subscribe_topic"]
     scanInterval = float(json_data["scan_interval"])
+    sendInterval = float(json_data["send_interval"])
+
+    devLock     = Lock()
 
     # Listen to MQTT server's messages
     client = mqtt.Client("P1")
@@ -151,7 +202,12 @@ def main():
     client.loop_start()
 
     # Start the routine sending the data to the server
+    rssiSender = Sender(float(json_data["send-interval"]))
+    rssiSender.daemon = True
     rssiSender.start()
+
+    # Activate BLE Scanner
+    scanner = Scanner().withDelegate(ScanDelegate(rssiSender))
 
     # Start scanning
     while (True):
