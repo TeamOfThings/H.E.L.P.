@@ -80,7 +80,6 @@ def help(bot, update):
                 'Maybe do you want me to add some new things to your system?\n' \
                 'Commands:\n' \
                 'If you want to add a new user send me a picture of the QR code on the device that you want to associate with that user and specify in the caption the name of the new user.\n'\
-                '/addUser <newUser> to add a new user in your system;\n' \
                 '/addRoom <newRoom> to add a new room in your system;\n' \
                 '\n'\
                 'Or do you want me to remove somethings/one from your system?\n' \
@@ -204,7 +203,7 @@ def getRoom(bot, update, args, chat_data):
 #######################################   POST   #######################################
 
 ########## NEW User
-
+#FIXME da eliminare perché sostituita da getImage (scansione qr code ecc)
 def addUser(bot, update, args):
     """
         Add a user to the system 
@@ -329,7 +328,7 @@ def main():
     dispatcher.add_handler(CommandHandler("roomList", getRoomList))    
     dispatcher.add_handler(CommandHandler("getRoom", getRoom, pass_args=True, pass_chat_data=True))
 
-    dispatcher.add_handler(CommandHandler("addUser", addRoom, pass_args=True))
+    #dispatcher.add_handler(CommandHandler("addUser", addRoom, pass_args=True))
     dispatcher.add_handler(CommandHandler("addRoom", addUser, pass_args=True))
 
     dispatcher.add_handler(CommandHandler("deleteUser", deleteUser, pass_args=True))
