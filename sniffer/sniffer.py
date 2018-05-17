@@ -40,8 +40,6 @@ class ScanDelegate(DefaultDelegate):
             handler after discovered new device
         """
 
-        # TODO add lock to devices Array
-            # Because we cannot modify the list while we are iterating thorugh it
         devLock.acquire(True)
 
         for e in devicesArray:
@@ -98,8 +96,7 @@ def on_message(client, userdata, message):
     """
 
     jsonMsg = json.loads(message.payload.decode("utf-8"))
-    # Update my data # TODO add lock to devicesArray
-        # I receive a new pair <user - beaconMAC>
+
     action = jsonMsg["action"]
     userName = jsonMsg["name"]
 
@@ -123,9 +120,12 @@ def on_message(client, userdata, message):
         tmp = dict()
         tmp["name"] = userName
         tmp["mac"] = userMAC
-        devicesArray.append(json.dumps(tmp))
+        devicesArray.append(tmp)
         dumpToFile()
 
+    else :
+        print("Invalid code")
+        
     devLock.release()
 
 def on_connect(client, userdata, flags, rc):
