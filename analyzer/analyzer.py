@@ -12,13 +12,9 @@ from pymongo import MongoClient
 from flask import Flask, abort, Response, request
 from threading import Thread, Lock
 
-"""
-	beacon dictionary <name, BeaconInfo>
-"""
-beaconTable = {}
 
-# List of registered rooms
-rooms= []
+# beacon dictionary <name, BeaconInfo>
+beaconTable = {}
 
 # Content of configuration file
 configFileContent = {}
@@ -32,9 +28,10 @@ configFCLocker = None
 # Configuration file name
 configFileName = ""
 
-"""
-    Instance of web-server
-"""
+# Topic's name on which publish updates for sniffers
+pubTopic= ""
+
+# Instance of web-server
 webApp = Flask(__name__)
 
 
@@ -49,9 +46,30 @@ database = None
 # Function to save configFileContent to to the file
 def  storeConfigurationFile () :
 	print ("Saving configuration to " + configFileName)
-	f= open(configFileName+"_", 'w')
+	f= open(configFileName, 'w')
 	json.dump (configFileContent, f)
 	f.close()
+
+
+
+# Function to convert rooms list to an array
+def roomsToArray () :
+	arr= []
+	for p in configFileContent["positions"] :
+		arr.append (configFileContent["positions"][p])
+	return arr
+
+
+
+# Function to translate room name to room id
+def roomNameToId (rn) :
+	rid= ""
+	if rn != "" :
+		for p in configFileContent["positions"] :
+			if (configFileContent["positions"][p] == rn) :
+				rid = p
+				break
+	return p
 
 
 
@@ -111,7 +129,6 @@ class Triangulate(Thread):
 	
 		Instances:
 			__time:	time to wait before performing triagulation
-			
 	"""
 
 	def __init__(self, time):
@@ -169,8 +186,8 @@ class Triangulate(Thread):
 				if stanza != "":
 					beaconTable[bea].setLast(stanza)
 					database.insert_db_entry(bea, stanza)
-				
-					print(bea + " - " + beaconTable[bea].getLast() + " :: " + str(info[pos]["lis"]) + " mean : " + str(info[pos]["mean"]))
+					roomId= beaconTable[bea].getLast()
+					print(bea + " - " + configFileContent["positions"][roomId] + " :: " + str(info[pos]["lis"]) + " mean : " + str(info[pos]["mean"]))
 
 			print("---------------------------------------------")
 
@@ -188,16 +205,16 @@ class BeaconInfo():
 		Instances:
 			__map: 	a dictionary map <room, measure_list>
 			__id:	Beacon's id
-			__rooms: list of registered rooms 
+			__sniffId: list of registered sniffers ID
 			__last:	last room a person was detected
 	"""
 
 
-	def __init__(self, id, rs):
+	def __init__(self, id, sids):
 		self.__map = dict()
 		self.__id = id
 		self.__last = ""
-		self.__rooms= rs
+		self.__sniffIds= sids
 
 
 	# Getters
@@ -219,20 +236,20 @@ class BeaconInfo():
 
 
 	# Other Methods
-	def addMeasure(self, room, measure):
+	def addMeasure(self, sid, measure):
 		"""
 			Add a received measure from a given room
 		"""
 
 		# Checking if requested room already exists
-		if not room in self.__rooms:
-			print "Room  " + room + "  doesn't exists (NOT REGISTERED!)"
+		if not sid in self.__sniffIds:
+			print "Room  " + sid + "  doesn't exists (NOT REGISTERED!)"
 			return
 
-		if not self.__map.has_key(str(room)):
-			self.__map[str(room)] = []
+		if not self.__map.has_key(str(sid)):
+			self.__map[str(sid)] = []
 
-		self.__map[str(room)].extend(measure)
+		self.__map[str(sid)].extend(measure)
 
 
 	def cleanInfo(self):
@@ -275,15 +292,18 @@ def root():
 #####     /rooms
 @webApp.route("/rooms", methods=["GET"])
 def roomsGet():
-    return Response(json.dumps(rooms), status=200, content_type="application/json")
+	return Response(json.dumps(roomsToArray()), status=200, content_type="application/json")
 
 #####
-#####     /rooms/<rid>
-@webApp.route("/rooms/<rid>", methods=['GET'])
-def getRooms (rid):
-	if rid == "" : 
+#####     /rooms/<rn>
+@webApp.route("/rooms/<rn>", methods=['GET'])
+def getRooms (rn):
+	rooms= roomsToArray()
+	rid = roomNameToId(rn)
+
+	if rn == "" : 
 		return Response("Room is empty", status=400, content_type="text/plain")
-	elif not rid in rooms :
+	elif not rn in rooms :
 		return Response("Requested room doesn't exists", status=400, content_type="text/plain")
 	else :
 		ls = []
@@ -296,8 +316,9 @@ def getRooms (rid):
 		return Response (json.dumps(ls), status=200, content_type="application/json")
 
 
-@webApp.route("/rooms/<rid>", methods=['POST'])
-def postRooms(rid):
+# FIXME
+@webApp.route("/rooms/<rn>", methods=['POST'])
+def postRooms(rn):
 	toRet= None
 	configFCLocker.acquire(True)
 	if rid == "" :
@@ -314,8 +335,9 @@ def postRooms(rid):
 	return toRet
 
 
-@webApp.route("/rooms/<rid>", methods=['DELETE'])
-def deleteRooms(rid):
+# FIXME
+@webApp.route("/rooms/<rn>", methods=['DELETE'])
+def deleteRooms(rn):
 	toRet= None
 	configFCLocker.acquire(True)
 	if rid == "" :
@@ -369,6 +391,10 @@ def deleteReadings(bid):
 
 
 #####
+##### TODO un metodo per prendere tutte le persone registrate
+
+
+#####
 #####     /people
 @webApp.route("/people", methods=["GET"])
 def getPeopleLocations():
@@ -376,8 +402,9 @@ def getPeopleLocations():
 	people = dict()
 	beaconTableLocker.acquire (True)
 	for b in beaconTable:
-		if not beaconTable[b].getLast() == "":
-			people[b] = str(beaconTable[b].getLast())
+		if not beaconTable[b].getLast() == "" :
+			rid = beaconTable[b].getLast()
+			people[b] = str(configFileContent["positions"][rid])
 	beaconTableLocker.release()
 	print(people)
 	return Response(json.dumps(people), status=200, content_type="application/json")
@@ -385,11 +412,6 @@ def getPeopleLocations():
 
 #####
 #####     /people/<rid>
-@webApp.route("/people/<rid>", methods=["GET"])
-def getPeople(rid):
-    return Response('["TODO list of people in a room"]', status=200, content_type="application/json")
-
-
 @webApp.route("/people/<pid>", methods=["POST"])
 def postPeople(pid):
 	toRet= None
@@ -400,9 +422,20 @@ def postPeople(pid):
 	elif beaconTable.has_key (pid) :
 		toRet= Response("Beacon with id  " + pid + "  already exists!", status=400, content_type="text/plain")
 	else :
-		beaconTable[pid]= BeaconInfo(pid, rooms)
+		rs= roomsToArray()
+		beaconTable[pid]= BeaconInfo(pid, rs)
 		configFileContent["devices"].append(pid)
 		storeConfigurationFile()
+		
+		# Publishing new person to all people with mac address
+		payload = {
+			"action" : "add",
+			"name" : pid,
+			"mac" : request.data
+		}
+		brokerAddress = configFileContent["broker-ip"]
+		publisher.single (pubTopic, json.dumps(payload), hostname=brokerAddress)
+
 		toRet= Response('', status=200, content_type="text/plain")
 	beaconTableLocker.release()
 	configFCLocker.release()
@@ -410,6 +443,7 @@ def postPeople(pid):
 
 
 
+# FIXME
 @webApp.route("/people/<pid>", methods=["DELETE"])
 def deletePeople(pid):
 	toRet= None
@@ -441,19 +475,17 @@ def on_message(client, userdata, message):
 	"""
 
 	jsonMsg = json.loads(message.payload.decode("utf-8"))
-
 	beaconTableLocker.acquire(True)
 
 	for b in jsonMsg["map"] :
 		if beaconTable.has_key(b) :
-			beaconTable[b].addMeasure(jsonMsg["position"],  jsonMsg["map"][b])
+			beaconTable[b].addMeasure(jsonMsg["station-id"],  jsonMsg["map"][b])
 		
 	beaconTableLocker.release()
 	"""
 		forma del payload
 		{
-			"id" : value
-			"position" : value
+			"stid" : value
 			{
 				"andrea" : [rssi_1, ..., rssi_n]
 				"luca" : [rssi_1, ..., rssi_n]
@@ -475,11 +507,11 @@ def main():
 
 	global beaconTable
 	global beaconTableLocker
-	global rooms
 	global database
 	global configFileContent
 	global configFCLocker
 	global configFileName
+	global pubTopic
 
 
 	print ("Initializing server")
@@ -491,22 +523,24 @@ def main():
 	beaconTableLocker = Lock()
 	configFCLocker= Lock()
 
-	for r in configFileContent["rooms"] :
-		rooms.append(r)
-		
+	tmpIds= []
+	for p in configFileContent["positions"] :
+		tmpIds.append (p)
+
 	for b in configFileContent["devices"] :
-		beaconTable[b]= BeaconInfo(b, rooms)
+		beaconTable[b]= BeaconInfo(b, tmpIds)
 
 	
 	# Instantiate Broker
 	broker_address = configFileContent["broker-ip"]
-	topic = configFileContent["topic"]
+	subTopic = configFileContent["subscribe_topic"]
+	pubTopic = configFileContent["publish_topic"]
 
 	print ("Init broker")
 
 	client = mqtt.Client("P1")
 	client.connect(broker_address)
-	client.subscribe(topic)
+	client.subscribe(subTopic)
 	client.on_message=on_message
 	client.loop_start()
 
