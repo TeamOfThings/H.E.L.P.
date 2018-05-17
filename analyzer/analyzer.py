@@ -408,8 +408,8 @@ def postPeople(pid):
 
 
 
-@webApp.route("/people/<rid>", methods=["DELETE"])
-def deletePeople(rid):
+@webApp.route("/people/<pid>", methods=["DELETE"])
+def deletePeople(pid):
 	toRet= None
 	configFCLocker.acquire(True)
 	beaconTableLocker.acquire(True)
