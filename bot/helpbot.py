@@ -8,7 +8,7 @@
     Press CTRL-Z to stop the bot
 """
 
-from telegram.ext import Updater, CommandHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from telegram import InlineQueryResultArticle, InputTextMessageContent
 from telegram.ext import InlineQueryHandler
 
@@ -30,8 +30,25 @@ def error(bot, update, error):
     logger.warning('Update "%s" caused error "%s"', update, error)
 
 
+
+#### MESSAGES ####
+# TODO
+def phot(bot, update):
+
+    try:
+        if update.message.photo is None:
+            update.message.reply_text('no foto')
+        else:
+            update.message.reply_text('una foto')
+
+    except (IndexError, ValueError):
+        update.message.reply_text('Inserire messaggio di errore')
+
+
+
 #### LINE COMMANDS ####
 
+# TODO scrivere meglio messaggi di HTTP error, e non "error" come sto facendo adesso, paxxerellino pigrotto XDXD asdasd
 
 def help(bot, update):
     """ Bot LineCommand: /start or /help """
@@ -151,7 +168,16 @@ def getRoom(bot, update, args, chat_data):
 
         if r.status_code == OKGET:
 
-            update.message.reply_text(r.text)
+            msg = r.json()
+            txt = ""
+            for user in msg:
+                txt += str(user) + "\n"
+
+            if txt == "":
+                txt = "No one in " + room
+
+            update.message.reply_text(txt)
+
         else :
             update.message.reply_text("Connection error")
 
@@ -287,6 +313,9 @@ def main():
 
     dispatcher.add_handler(CommandHandler("deleteUser", deleteUser, pass_args=True))
     dispatcher.add_handler(CommandHandler("deleteRoom", deleteRoom, pass_args=True))
+
+    # Handler for messages which are a photo
+    dispatcher.add_handler(MessageHandler(Filters.photo, phot))
 
     dispatcher.add_error_handler(error)
 
