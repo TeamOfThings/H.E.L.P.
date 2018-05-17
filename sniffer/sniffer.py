@@ -205,7 +205,7 @@ def main():
     client.loop_start()
 
     # Start the routine sending the data to the server
-    rssiSender = Sender(float(json_data["send-interval"]))
+    rssiSender = Sender(sendInterval)
     rssiSender.daemon = True
     rssiSender.start()
 
