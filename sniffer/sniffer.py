@@ -200,7 +200,7 @@ def main():
     # Listen to MQTT server's messages
     client = mqtt.Client("P2")
     client.connect(brokerIP)
-    client.subscribe(subTopic)
+    client.subscribe(subTopic, qos=2)
     client.on_message=on_message
     client.loop_start()
 
