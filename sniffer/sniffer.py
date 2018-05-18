@@ -72,7 +72,7 @@ class Sender(Thread):
             time.sleep(self.__time)
             payload = self.__buildPayload(self.__map)
             print payload
-            publisher.single(pubTopic, payload, hostname=brokerIP, qos=2)
+            publisher.single(pubTopic, payload, hostname=brokerIP)
             self.__map = {} # reset map
             
 
