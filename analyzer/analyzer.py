@@ -482,6 +482,7 @@ def on_message(client, userdata, message):
 			beaconTable[b].addMeasure(jsonMsg["station-id"],  jsonMsg["map"][b])
 		
 	beaconTableLocker.release()
+
 	"""
 		forma del payload
 		{
