@@ -551,7 +551,7 @@ def main():
 	client = mqtt.Client("P1")
 	client.connect(broker_address)
 	print ("Subscription to " + broker_address + " on topic " + subTopic)
-	client.subscribe(subTopic, qos=2)
+	client.subscribe(subTopic)
 	client.on_message=on_message
 	client.loop_start()
 
