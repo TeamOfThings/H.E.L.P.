@@ -243,7 +243,7 @@ class BeaconInfo():
 
 		# Checking if requested room already exists
 		if not sid in self.__sniffIds:
-			print "Room  " + sid + "  doesn't exists (NOT REGISTERED!)"
+			print ("Room  " + sid + "  doesn't exists (NOT REGISTERED!)")
 			return
 
 		if not self.__map.has_key(str(sid)):
