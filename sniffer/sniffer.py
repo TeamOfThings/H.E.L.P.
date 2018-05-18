@@ -198,7 +198,7 @@ def main():
     devLock     = Lock()
 
     # Listen to MQTT server's messages
-    client = mqtt.Client("P2")
+    client = mqtt.Client(stationId)
     client.connect(brokerIP)
     client.subscribe(subTopic, qos=2)
     client.on_message=on_message
