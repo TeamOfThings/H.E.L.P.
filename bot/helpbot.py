@@ -23,6 +23,8 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+ip_address = ""
+
 # HTTP Status code
 OKGET = 200
 OKPOST = 201
@@ -34,7 +36,6 @@ def error(bot, update, error):
 
 
 #### MESSAGES ####
-# TODO fare la post di utente e mac address
 def getImage(bot, update):
 
     try:
@@ -52,9 +53,15 @@ def getImage(bot, update):
             if len(text) == 0:
                 update.message.reply_text("No QR code found!")
             else:
-                last_address = text[-1].data
+                mac_address = text[-1].data
                 name = update.message.caption
-                update.message.reply_text('Decoded message is: '+last_address+"\n\n"+"User "+name+" associated to Mac Address "+last_address)
+
+                r = requests.post('http://'+ip_address+':8080/people/'+name, data=mac_address)
+
+                if r.status_code == OKPOST:
+                    update.message.reply_text("User "+name+" associated to Mac Address "+mac_address)
+                else :
+                    update.message.reply_text("Connection error ")
 
     except (IndexError, ValueError):
         update.message.reply_text('Inserire messaggio di errore')
@@ -103,7 +110,7 @@ def getUser(bot, update, args, chat_data):
 
     try:
         user = args[0]
-        req = requests.get('http://192.168.1.78:8080/people')
+        req = requests.get('http://'+ip_address+':8080/people')
 
         if(req.status_code == OKGET):
             txt = user + " not at home"
@@ -127,7 +134,7 @@ def getUsers(bot, update):
     """
 
     try:
-        req = requests.get('http://192.168.1.78:8080/people')
+        req = requests.get('http://'+ip_address+':8080/people')
 
         if(req.status_code == OKGET):
             txt = ""
@@ -151,7 +158,7 @@ def getRoomList(bot, update):
     """
 
     try:
-        r = requests.get('http://192.168.1.78:8080/rooms')
+        r = requests.get('http://'+ip_address+':8080/rooms')
 
         if r.status_code == OKGET:
             msg = r.json()
@@ -179,7 +186,7 @@ def getRoom(bot, update, args, chat_data):
 
     try:
         room = args[0]
-        r = requests.get('http://192.168.1.78:8080/rooms/'+room)
+        r = requests.get('http://'+ip_address+':8080/rooms/'+room)
 
         if r.status_code == OKGET:
 
@@ -202,8 +209,7 @@ def getRoom(bot, update, args, chat_data):
 
 #######################################   POST   #######################################
 
-########## NEW User
-#FIXME da eliminare perché sostituita da getImage (scansione qr code ecc)
+########## NEW User ########
 def addUser(bot, update, args):
     """
         Add a user to the system 
@@ -238,7 +244,7 @@ def addRoom(bot, update, args):
 
         update.message.reply_text("Added " + room)
         """
-        r = requests.post('http://192.168.1.78:8080/rooms/'+room)
+        r = requests.post('http://'+ip_address+':8080/rooms/'+room)
 
         if r.status_code == OKPOST:
 
@@ -262,16 +268,16 @@ def deleteUser(bot, update, args):
     try:
         user = args[0]
 
-        update.message.reply_text("Removed " + user)
-        """
-        r = requests.delete('http://192.168.1.78:8080/rooms/'+room)
+        #update.message.reply_text("Removed " + user)
+        
+        r = requests.delete('http://'+ip_address+':8080/people/'+user)
 
         if r.status_code == OKDELETE:
 
             update.message.reply_text("Removed " + user)
         else :
             update.message.reply_text("Connection error")
-        """
+        
     except (IndexError, ValueError):
         update.message.reply_text('Use /deleteUser <user>')
 
@@ -288,7 +294,7 @@ def deleteRoom(bot, update, args):
 
         update.message.reply_text("Removed " + room)
         """
-        r = requests.delete('http://192.168.1.78:8080/rooms/'+room)
+        r = requests.delete('http://'+ip_address+':8080/rooms/'+room)
 
         if r.status_code == OKDELETE:
 
@@ -304,8 +310,7 @@ def deleteRoom(bot, update, args):
 
 
 def main():
-    global waiting_for_name
-    global last_address
+    global ip_address
 
     if len(sys.argv) != 2 :
         sys.exit("Wrong number of arguments!\n\tExiting")
@@ -316,8 +321,7 @@ def main():
     updater = Updater(helpbot)
     dispatcher = updater.dispatcher
 
-    waiting_for_name = False
-    last_address = None
+    ip_address = jsonData["ip_address"]
 
     # Add commands to the bot
     dispatcher.add_handler(CommandHandler("start", help))
