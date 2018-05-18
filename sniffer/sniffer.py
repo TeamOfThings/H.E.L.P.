@@ -17,7 +17,7 @@ pubTopic        = ""
 subTopic        = ""
 scanInterval    = "1"
 
-devLock            = None
+devLock         = None
 
 # TODO magari rimuovere informazione user - mac e lasciare solo mac nelle stazioni;
 # la mappa poi la fa il server 
@@ -198,7 +198,7 @@ def main():
     devLock     = Lock()
 
     # Listen to MQTT server's messages
-    client = mqtt.Client("P1")
+    client = mqtt.Client("P2")
     client.connect(brokerIP)
     client.subscribe(subTopic)
     client.on_message=on_message
@@ -207,10 +207,13 @@ def main():
     # Start the routine sending the data to the server
     rssiSender = Sender(sendInterval)
     rssiSender.daemon = True
-    rssiSender.start()
 
     # Activate BLE Scanner
     scanner = Scanner().withDelegate(ScanDelegate(rssiSender))
+
+
+    rssiSender.start()
+
 
     # Start scanning
     while (True):
