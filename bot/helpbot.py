@@ -35,38 +35,6 @@ def error(bot, update, error):
     logger.warning('Update "%s" caused error "%s"', update, error)
 
 
-#### MESSAGES ####
-def getImage(bot, update):
-
-    try:
-        if update.message.photo is None:
-            update.message.reply_text('no foto')
-        elif update.message.caption is None:
-            update.message.reply_text("Missing caption")
-        else:
-            img_id = update.message.photo[-1].file_id
-            newFile = bot.get_file(img_id)
-            newFile.download('qrcode.png')
-
-            text = decode(Image.open("qrcode.png"))
-            
-            if len(text) == 0:
-                update.message.reply_text("No QR code found!")
-            else:
-                mac_address = text[-1].data
-                name = update.message.caption
-
-                r = requests.post('http://'+ip_address+':8080/people/'+name, data=mac_address)
-
-                if r.status_code == OKPOST:
-                    update.message.reply_text("User "+name+" associated to Mac Address "+mac_address)
-                else :
-                    update.message.reply_text("Connection error ")
-
-    except (IndexError, ValueError):
-        update.message.reply_text('Inserire messaggio di errore')
-
-
 
 #### LINE COMMANDS ####
 
@@ -199,6 +167,12 @@ def getRoom(bot, update, args, chat_data):
                 txt = "No one in " + room
 
             update.message.reply_text(txt)
+        
+        elif r.content == "Room is empty":
+            update.message.reply_text("You didn't specify the room!")
+        
+        elif r.content == "Requested room doesn't exists":
+            update.message.reply_text("Requested room doesn't exists!\nTry again!")
 
         else :
             update.message.reply_text("Connection error")
@@ -209,28 +183,42 @@ def getRoom(bot, update, args, chat_data):
 
 #######################################   POST   #######################################
 
-########## NEW User ########
-def addUser(bot, update, args):
-    """
-        Add a user to the system 
-    """
+
+########## NEW User
+
+def addUser(bot, update):
 
     try:
-        user = args[0]
+        if update.message.photo is None:
+            update.message.reply_text('no foto')
+        elif update.message.caption is None:
+            update.message.reply_text("Missing caption")
+        else:
+            img_id = update.message.photo[-1].file_id
+            newFile = bot.get_file(img_id)
+            newFile.download('qrcode.png')
 
-        update.message.reply_text("Added " + user)
-        """
-        r = requests.post('http://192.168.1.78:8080/rooms/'+room)
+            text = decode(Image.open("qrcode.png"))
+            
+            if len(text) == 0:
+                update.message.reply_text("No QR code found!")
+            else:
+                mac_address = text[-1].data
+                name = update.message.caption
 
-        if r.status_code == OKPOST:
+                r = requests.post('http://'+ip_address+':8080/people/'+name, data=mac_address)
 
-            update.message.reply_text("Added " + room)
-        else :
-            update.message.reply_text("Connection error")
-        """
+                if r.status_code == OKPOST:
+                    update.message.reply_text("User "+name+" associated to Mac Address "+mac_address)
+                elif r.content=="Beacon with id  " + name + "  already exists!":
+                    update.message.reply_text("User "+name+" is already associated with a device!\nTry again!")
+                elif r.content=="Mac address  " + mac_address + "  already in use!":
+                    update.message.reply_text("This device is already associated to an user!")
+                else :
+                    update.message.reply_text("Connection error ")
+
     except (IndexError, ValueError):
-        update.message.reply_text('Use /addUser <newUser>')
-
+        update.message.reply_text('Inserire messaggio di errore')
 
 ########## NEW Room
 
@@ -273,8 +261,11 @@ def deleteUser(bot, update, args):
         r = requests.delete('http://'+ip_address+':8080/people/'+user)
 
         if r.status_code == OKDELETE:
-
             update.message.reply_text("Removed " + user)
+        elif r.content=="Beacon id is empty!":
+            update.message.reply_text("Please specify the user you want to delete.")
+        elif r.content=="Beacon with id  " + user + "  doesn't exist!":
+            update.message.reply_text("This user is not associated to any device.")
         else :
             update.message.reply_text("Connection error")
         
@@ -339,7 +330,7 @@ def main():
     dispatcher.add_handler(CommandHandler("deleteRoom", deleteRoom, pass_args=True))
 
     # Handler for messages which are a photo
-    dispatcher.add_handler(MessageHandler(Filters.photo, getImage))
+    dispatcher.add_handler(MessageHandler(Filters.photo, addUser))
 
     dispatcher.add_error_handler(error)
 

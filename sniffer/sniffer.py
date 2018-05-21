@@ -45,8 +45,8 @@ class ScanDelegate(DefaultDelegate):
         devLock.acquire(True)
 
         for e in devicesArray:
-            if e["mac"] == dev.addr:
-                self.__sender.addMeasurement(e["mac"], dev.rssi)
+            if e == dev.addr:
+                self.__sender.addMeasurement(e, dev.rssi)
 
         devLock.release()
 
