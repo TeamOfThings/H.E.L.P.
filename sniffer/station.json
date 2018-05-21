@@ -1,22 +1,10 @@
 {
   "id": "03ff00",
   "devices": [
-    {
-      "name": "chiara",
-      "mac": "0c:f3:ee:04:2e:5e"
-    },
-    {
-      "name": "luca",
-      "mac": "0c:f3:ee:04:2e:b4"
-    },
-    {
-      "name": "andrea",
-      "mac": "0c:f3:ee:04:30:d5"
-    },
-    {
-      "name": "nerfgun",
-      "mac": "0c:f3:ee:04:2e:fe"
-    }
+      "0c:f3:ee:04:2e:5e",
+      "0c:f3:ee:04:2e:b4",
+      "0c:f3:ee:04:30:d5",
+      "0c:f3:ee:04:2e:fe"
   ],
   "broker_ip": "192.168.1.78",
   "publish_topic": "update/sensors",

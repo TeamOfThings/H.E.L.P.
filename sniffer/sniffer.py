@@ -19,8 +19,7 @@ scanInterval    = "1"
 
 devLock         = None
 
-# TODO magari rimuovere informazione user - mac e lasciare solo mac nelle stazioni;
-# la mappa poi la fa il server 
+# TODO test
 
 ############################## Classes ##############################
 
@@ -47,7 +46,7 @@ class ScanDelegate(DefaultDelegate):
 
         for e in devicesArray:
             if e["mac"] == dev.addr:
-                self.__sender.addMeasurement(e["name"], dev.rssi)
+                self.__sender.addMeasurement(e["mac"], dev.rssi)
 
         devLock.release()
 
@@ -96,34 +95,34 @@ class Sender(Thread):
 def on_message(client, userdata, message):
     """
         Broker callback once a msg is received
+        Message struct:
+        {
+            "action" : "add" / "delete"
+            "mac" : "..."
+        }
     """
 
     jsonMsg = json.loads(message.payload.decode("utf-8"))
 
     action = jsonMsg["action"]
-    userName = jsonMsg["name"]
+    userMac = jsonMsg["mac"]
 
     devLock.acquire(True)
 
     if action == "delete":
         # Remove pair
-        tmp = dict()
+        tmp = ""
         for dev in devicesArray:
-            if dev["name"] == userName:
-                tmp["name"] = userName
-                tmp["mac"] = dev["mac"]
+            if dev == userMac:
+                tmp = userMac
+                devicesArray.remove(tmp)
                 break
 
-        devicesArray.remove(tmp)
         dumpToFile()
 
     elif action == "add":
         # Add pair
-        userMAC = jsonMsg["mac"]
-        tmp = dict()
-        tmp["name"] = userName
-        tmp["mac"] = userMAC
-        devicesArray.append(tmp)
+        devicesArray.append(jsonMsg["mac"])
         dumpToFile()
 
     else :
@@ -151,7 +150,7 @@ def dumpToFile():
     data["send_interval"] = sendInterval
 
     with open('station.json', 'w') as outfile:
-        json.dump(data, outfile)
+        json.dump(data, outfile, indent=4)
 
 
 ############################## MAIN ##############################
