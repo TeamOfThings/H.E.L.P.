@@ -79,6 +79,13 @@ def roomNameToId (rn) :
 	return rid
 
 
+
+# Function to check if a string represents a mac address
+def isMacAddress (ma) :
+	# TODO
+	return True
+
+
 #######################################   CLASSES   #######################################
 
 class BeaconInfo():
@@ -88,7 +95,6 @@ class BeaconInfo():
 		Instances:
 			__map: 	a dictionary map <room, measure_list>
 			__id:	Beacon's id
-			__sniffId: list of registered sniffers ID
 			__last:	last room a person was detected
 	"""
 
@@ -97,7 +103,6 @@ class BeaconInfo():
 		self.__map = dict()
 		self.__id = id
 		self.__last = ""
-		self.__sniffIds= sids
 
 
 	# Getters
@@ -123,11 +128,6 @@ class BeaconInfo():
 		"""
 			Add a received measure from a given room
 		"""
-
-		# Checking if requested room already exists
-		if not sid in self.__sniffIds:
-			print ("Room  " + sid + "  doesn't exists (NOT REGISTERED!)")
-			return
 
 		if not self.__map.has_key(str(sid)):
 			self.__map[str(sid)] = []
@@ -194,38 +194,49 @@ def getRooms (rn):
 		return Response (json.dumps(ls), status=200, content_type="application/json")
 
 
-# FIXME
+
 @webApp.route("/rooms/<rn>", methods=['POST'])
 def postRooms(rn):
 	toRet= None
 	configFCLocker.acquire(True)
-	if rid == "" :
+
+	rooms= configFileContent["positions"].values()
+
+	if rn == "" :
 		toRet= Response("Room is empty!", status=400, content_type="text/plain")
-	elif rid in rooms :
+	elif request.data == "" :
+		toRet = Response("Invalid raspberry mac", status=400, content_type="text/plain")
+	elif rn in rooms :
 		toRet= Response("Requested room already exists!", status=400, content_type="text/plain")
 	else :
-		#print ("Creating room " + rid)
-		rooms.append(rid)
-		configFileContent["rooms"].append(rid)
+		entry= {request.data : rn}
+		print ("Creating room  " + str(entry))
+		configFileContent["positions"][request.data]= rn
 		storeConfigurationFile ()
 		toRet= Response("", status=201, content_type="text/plain")
 	configFCLocker.release()
+
 	return toRet
 
 
-# FIXME
+
 @webApp.route("/rooms/<rn>", methods=['DELETE'])
 def deleteRooms(rn):
 	toRet= None
 	configFCLocker.acquire(True)
-	if rid == "" :
+
+	rooms= configFileContent["positions"].values()
+
+	if rn == "" :
 		toRet= Response("Room name is empty!", status=400, content_type="text/plain")
-	elif not rid in rooms :
-		toRet= Response("Room name  " + rid + "  doesn't exist!", status=400, content_type="text/plain")
+	elif not rn in rooms :
+		toRet= Response("Room name  " + rn + "  doesn't exist!", status=400, content_type="text/plain")
 	else :
+		rid = roomNameToId (rn)
+
 		beaconTableLocker.acquire(True)
-		rooms.remove (rid)
-		configFileContent["rooms"].remove(rid)
+		
+		del configFileContent["positions"][rid]
 		storeConfigurationFile ()
 		
 		for b in beaconTable :
@@ -233,9 +244,10 @@ def deleteRooms(rn):
 			if bo.getLast() == rid :
 				bo.setLast("")
 		beaconTableLocker.release ()
-		database.delete_room_entries(rid)
+		database.delete_room_entries(rn)
 		toRet= Response("", status=200, content_type="text/plain")
 	configFCLocker.release()
+
 	return toRet
 
 
@@ -278,6 +290,7 @@ def getPeopleList () :
 	for d in configFileContent["devices"] :
 		p= configFileContent["devices"][d]
 		people.append(p)
+	configFCLocker.release ()
 	return Response (json.dumps(people))
 
 
@@ -376,18 +389,31 @@ def on_message(client, userdata, message):
 	"""
 
 	jsonMsg = json.loads(message.payload.decode("utf-8"))
+	configFCLocker.acquire (True)
 	beaconTableLocker.acquire(True)
 
-	for mac in jsonMsg["map"] :
-		try:
-			user = configFileContent["devices"][mac]
-			if beaconTable.has_key(user) :
-				beaconTable[user].addMeasure(jsonMsg["station-id"],  jsonMsg["map"][mac])
-			
-		except(KeyError):
-			print("Utente " + mac + " rimosso")
+	# Checking if the sender of message is registered
+	found = False
+	for p in configFileContent["positions"] :
+		#if configFileContent["positions"][p] == jsonMsg["station-id"] :
+		if p == jsonMsg["station-id"] :
+			found= True
+
+	if not found :
+		print ("Station id  " + jsonMsg["station-id"] + "  doesn't correspond to any registered room!")
+	
+	else :
+		for mac in jsonMsg["map"] :
+			try:
+				user = configFileContent["devices"][mac]
+				if beaconTable.has_key(user) :
+					beaconTable[user].addMeasure(jsonMsg["station-id"],  jsonMsg["map"][mac])
+				
+			except(KeyError):
+				print("Utente " + mac + " rimosso")
 
 	beaconTableLocker.release()
+	configFCLocker.release ()
 
 	"""
 		forma del payload
