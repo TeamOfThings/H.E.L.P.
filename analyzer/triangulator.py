@@ -14,7 +14,10 @@ class Triangulate(Thread):
         Thread performing the triangulation
 
         Instances:
-            __time:	time to wait before performing triagulation
+            __time				: time to wait before performing triagulation
+            __beaconTable		: reference to the table of beacons
+			__beaconTableLocker	: reference to the lock of the beacon table
+			__database			: reference to the database interface
     """
 
     def __init__(self, time, beaconTab, beaconTabLock, dbref):
@@ -74,8 +77,6 @@ class Triangulate(Thread):
 				if stanza != "":
 					self.__beaconTable[bea].setLast(stanza)
 					self.__database.insert_db_entry(bea, stanza)
-					roomId = self.__beaconTable[bea].getLast()
-					# info[pos][...] prende l'ultimo (pos itera fino alla fine) => stampa sbagliata, ma triangola bene
-					print(bea + " - " + roomId)
+					print(bea + " - " + stanza)
 
 			print("---------------------------------------------")

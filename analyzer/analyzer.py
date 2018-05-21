@@ -60,6 +60,7 @@ def  storeConfigurationFile () :
 
 # Function to convert rooms list to an array
 def roomsToArray () :
+	
 	arr= []
 	for p in configFileContent["positions"] :
 		arr.append (configFileContent["positions"][p])
@@ -75,7 +76,7 @@ def roomNameToId (rn) :
 			if (configFileContent["positions"][p] == rn) :
 				rid = p
 				break
-	return p
+	return rid
 
 
 #######################################   CLASSES   #######################################
@@ -283,7 +284,6 @@ def getPeopleLocations():
 			rid = beaconTable[b].getLast()
 			people[b] = str(configFileContent["positions"][rid])
 	beaconTableLocker.release()
-	print(people)
 	return Response(json.dumps(people), status=200, content_type="application/json")
 
 
@@ -302,6 +302,7 @@ def postPeople(pid):
 		toRet = Response("Mac address  " + request.data + "  already in use!", status=400, content_type="text/plain")
 	else :
 		rs= roomsToArray()
+
 		beaconTable[pid]= BeaconInfo(pid, rs)
 		configFileContent["devices"].update({request.data:pid})
 		storeConfigurationFile()
@@ -368,10 +369,14 @@ def on_message(client, userdata, message):
 	beaconTableLocker.acquire(True)
 
 	for mac in jsonMsg["map"] :
-		user = configFileContent["devices"][mac]
-		if beaconTable.has_key(user) :
-			beaconTable[user].addMeasure(jsonMsg["station-id"],  jsonMsg["map"][mac])
-		
+		try:
+			user = configFileContent["devices"][mac]
+			if beaconTable.has_key(user) :
+				beaconTable[user].addMeasure(jsonMsg["station-id"],  jsonMsg["map"][mac])
+			
+		except(KeyError):
+			print("Utente " + mac + " rimosso")
+
 	beaconTableLocker.release()
 
 	"""
@@ -422,7 +427,6 @@ def main():
 
 	for b in configFileContent["devices"].values() :
 		beaconTable[b]= BeaconInfo(b, tmpIds)
-
 	
 	# Instantiate Broker
 	broker_address = configFileContent["broker-ip"]

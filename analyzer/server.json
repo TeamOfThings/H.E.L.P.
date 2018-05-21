@@ -5,13 +5,6 @@
         "03ff00": "cameraLisi", 
         "03ff02": "cucina"
     }, 
-    "devices": {
-        "0c:f3:ee:04:2e:b4": "luca", 
-        "0c:f3:ee:04:2e:5e": "chiara", 
-        "0c:f3:ee:04:30:d5": "andrea"
-    }, 
-    "algorithm-interval": "5", 
-    "server-port": "8080", 
     "DB_connection_params": {
         "host": "ds219130.mlab.com", 
         "password": "totproject", 
@@ -19,7 +12,13 @@
         "user": "TeamOfThings", 
         "port": "19130"
     }, 
-    "server-ip": "192.168.1.87", 
+    "algorithm-interval": "5", 
+    "server-port": "8080", 
+    "devices": {
+        "0c:f3:ee:04:2e:5e": "chiara", 
+        "0c:f3:ee:04:2e:b4": "luca"
+    }, 
+    "server-ip": "192.168.1.75", 
     "publish_topic": "update/stations", 
-    "broker-ip": "192.168.1.87"
+    "broker-ip": "192.168.1.75"
 }

@@ -10,7 +10,6 @@ from threading import Thread, Lock
 
 # Global Variables, init with default value
 stationId       = ""
-position        = ""
 devicesArray    = []
 brokerIP        = "127.0.0.1"
 pubTopic        = ""
@@ -45,8 +44,8 @@ class ScanDelegate(DefaultDelegate):
         devLock.acquire(True)
 
         for e in devicesArray:
-            if e["mac"] == dev.addr:
-                self.__sender.addMeasurement(e["mac"], dev.rssi)
+            if e == dev.addr:
+                self.__sender.addMeasurement(e, dev.rssi)
 
         devLock.release()
 
@@ -65,7 +64,6 @@ class Sender(Thread):
         self.__time = time 
         self.__map = {}
 	
-
     def run(self):
         while(True):
             time.sleep(self.__time)
@@ -111,11 +109,9 @@ def on_message(client, userdata, message):
 
     if action == "delete":
         # Remove pair
-        tmp = ""
         for dev in devicesArray:
             if dev == userMac:
-                tmp = userMac
-                devicesArray.remove(tmp)
+                devicesArray.remove(userMac)
                 break
 
         dumpToFile()
