@@ -53,7 +53,7 @@ database = None
 def  storeConfigurationFile () :
 	print ("Saving configuration to " + configFileName)
 	f= open(configFileName, 'w')
-	json.dump (configFileContent, f)
+	json.dump(configFileContent, f, indent=4)
 	f.close()
 
 
@@ -298,17 +298,17 @@ def postPeople(pid):
 		toRet= Response("Beacon id is empty!", status=400, content_type="text/plain")
 	elif beaconTable.has_key (pid) :
 		toRet= Response("Beacon with id  " + pid + "  already exists!", status=400, content_type="text/plain")
-	# TODO se il mac address esiste sovrascrivere il nome associato!!
+	elif request.data in configFileContent["devices"]:
+		toRet = Response("Mac address  " + request.data + "  already in use!", status=400, content_type="text/plain")
 	else :
 		rs= roomsToArray()
 		beaconTable[pid]= BeaconInfo(pid, rs)
-		configFileContent["devices"].append(pid)
+		configFileContent["devices"].update({request.data:pid})
 		storeConfigurationFile()
 		
 		# Publishing new person to all people with mac address
 		payload = {
 			"action" : "add",
-			"name" : pid,
 			"mac" : request.data
 		}
 		brokerAddress = configFileContent["broker-ip"]
@@ -330,17 +330,23 @@ def deletePeople(pid):
 	if pid == "" :
 		toRet= Response("Beacon id is empty!", status=400, content_type="text/plain")
 	elif not beaconTable.has_key (pid) :
-		toRet= Response("Beacon with id  ' + pid + '  doesn't exist!", status=400, content_type="text/plain")
+		toRet= Response("Beacon with id  " + pid + "  doesn't exist!", status=400, content_type="text/plain")
 	else :
 		beaconTable.pop(pid)
 		database.delete_device_entries(pid)
-		#FIXME modificare config file content!!!
+		mac_address = ""
+		for mac, name in configFileContent["devices"].items():
+			if name ==pid:
+				mac_address = mac
+
+		print("Deleting "+mac_address+" association with user "+pid)
+		configFileContent["devices"].pop(mac_address)
 		storeConfigurationFile()
 		
 		# Deleting person
 		payload = {
 			"action" : "delete",
-			"name" : pid,
+			"mac" : mac_address,
 		}
 		brokerAddress = configFileContent["broker-ip"]
 		publisher.single (pubTopic, json.dumps(payload), hostname=brokerAddress)
@@ -413,7 +419,7 @@ def main():
 	for p in configFileContent["positions"] :
 		tmpIds.append (p)
 
-	for b in configFileContent["devices"] :
+	for b in configFileContent["devices"].values() :
 		beaconTable[b]= BeaconInfo(b, tmpIds)
 
 	
