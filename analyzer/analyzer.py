@@ -13,6 +13,9 @@ from flask import Flask, abort, Response, request
 from threading import Thread, Lock
 from db_interface import DBInterface
 
+#import triangulator
+
+#######################################   GLOBAL VARIABLES   #######################################
 
 # beacon dictionary <name, BeaconInfo>
 beaconTable = {}
@@ -43,6 +46,8 @@ webApp = Flask(__name__)
 database = None
 
 
+#######################################   HELPER FUNCTIONS   #######################################
+
 
 # Function to save configFileContent to to the file
 def  storeConfigurationFile () :
@@ -72,8 +77,6 @@ def roomNameToId (rn) :
 				break
 	return p
 	
-
-
 
 class Triangulate(Thread):
 	"""
@@ -139,15 +142,10 @@ class Triangulate(Thread):
 					beaconTable[bea].setLast(stanza)
 					database.insert_db_entry(bea, stanza)
 					roomId= beaconTable[bea].getLast()
+					# info[pos][...] prende l'ultimo (pos itera fino alla fine) => stampa sbagliata, ma triangola bene
 					print(bea + " - " + configFileContent["positions"][roomId] + " :: " + str(info[pos]["lis"]) + " mean : " + str(info[pos]["mean"]))
 
 			print("---------------------------------------------")
-
-
-
-
-
-
 
 
 class BeaconInfo():
@@ -212,13 +210,6 @@ class BeaconInfo():
 			self.__map[e] = []
 
 
-
-
-
-
-
-
-
 class WebServer(Thread):
     """
         Thread running the web server
@@ -234,6 +225,8 @@ class WebServer(Thread):
     def run(self):
 		self.__flaskApp.run(self.__ip, self.__port)
 
+
+#######################################   REST INTERFACE   #######################################
 
 ## Routing rules for web server thread
 @webApp.route('/')
@@ -426,11 +419,7 @@ def deletePeople(pid):
 	return toRet
 
 
-
-
-
-
-
+#######################################   MQTT CALLBACKS   #######################################
 
 def on_message(client, userdata, message):
 	"""
@@ -460,6 +449,7 @@ def on_message(client, userdata, message):
 	"""
 
 
+#######################################   MAIN   #######################################
 
 def main():
 	"""
