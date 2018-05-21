@@ -367,9 +367,10 @@ def on_message(client, userdata, message):
 	jsonMsg = json.loads(message.payload.decode("utf-8"))
 	beaconTableLocker.acquire(True)
 
-	for b in jsonMsg["map"] :
-		if beaconTable.has_key(b) :
-			beaconTable[b].addMeasure(jsonMsg["station-id"],  jsonMsg["map"][b])
+	for mac in jsonMsg["map"] :
+		user = configFileContent["devices"][mac]
+		if beaconTable.has_key(user) :
+			beaconTable[user].addMeasure(jsonMsg["station-id"],  jsonMsg["map"][mac])
 		
 	beaconTableLocker.release()
 
@@ -378,10 +379,10 @@ def on_message(client, userdata, message):
 		{
 			"stid" : value
 			{
-				"andrea" : [rssi_1, ..., rssi_n]
-				"luca" : [rssi_1, ..., rssi_n]
-				"chiara" : [rssi_1, ..., rssi_n]
-				"nerfgun" : [rssi_1, ..., rssi_n]
+				"mac_address1" : [rssi_1, ..., rssi_n]
+				"mac_address2" : [rssi_1, ..., rssi_n]
+				"mac_address3" : [rssi_1, ..., rssi_n]
+				"mac_address4" : [rssi_1, ..., rssi_n]
 			}
 		}
 	"""
