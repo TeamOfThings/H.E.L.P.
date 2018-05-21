@@ -269,7 +269,17 @@ def deleteReadings(bid):
 
 
 #####
-##### TODO un metodo per prendere tutte le persone registrate
+#####	/peopleList
+@webApp.route("/peopleList", methods=["GET"])
+def getPeopleList () :
+
+	people= []
+	configFCLocker.acquire (True)
+	for d in configFileContent["devices"] :
+		p= configFileContent["devices"][d]
+		people.append(p)
+	return Response (json.dumps(people))
+
 
 
 #####
