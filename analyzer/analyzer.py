@@ -373,6 +373,7 @@ def postPeople(pid):
 		toRet= Response("Beacon id is empty!", status=400, content_type="text/plain")
 	elif beaconTable.has_key (pid) :
 		toRet= Response("Beacon with id  " + pid + "  already exists!", status=400, content_type="text/plain")
+	# TODO se il mac address esiste sovrascrivere il nome associato!!
 	else :
 		rs= roomsToArray()
 		beaconTable[pid]= BeaconInfo(pid, rs)
@@ -408,6 +409,7 @@ def deletePeople(pid):
 	else :
 		beaconTable.pop(pid)
 		database.delete_device_entries(pid)
+		#FIXME modificare config file content!!!
 		storeConfigurationFile()
 		
 		# Deleting person
