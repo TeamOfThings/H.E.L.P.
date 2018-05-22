@@ -1,26 +1,26 @@
 {
-    "subscribe_topic": "update/sensors",
+    "subscribe_topic": "update/sensors", 
     "positions": {
-        "03ff01": "cameraBache",
-        "03ff00": "cameraLisi",
+        "03ff01": "cameraBache", 
+        "03ff00": "Narnia", 
         "03ff02": "cucina"
-    },
-    "DB_connection_params": {
-        "host": "ds219130.mlab.com",
-        "password": "totproject",
-        "namespace": "help_db",
-        "user": "TeamOfThings",
-        "port": "19130"
-    },
-    "algorithm-interval": "5",
-    "server-port": "8080",
+    }, 
     "devices": {
-        "0c:f3:ee:04:2e:5e": "chiara",
-        "0c:f3:ee:04:2e:b4": "luca",
-        "0c:f3:ee:04:30:d5": "andrea",
-        "0c:f3:ee:04:2e:fe": "nerfgun"
-    },
-    "server-ip": "192.168.1.85",
-    "publish_topic": "update/stations",
+        "0c:f3:ee:04:2e:fe": "nerfgun", 
+        "0c:f3:ee:04:2e:b4": "luca", 
+        "0c:f3:ee:04:2e:5e": "chiara", 
+        "0c:f3:ee:04:30:d5": "andrea"
+    }, 
+    "algorithm-interval": "5", 
+    "server-port": "8080", 
+    "DB_connection_params": {
+        "host": "ds219130.mlab.com", 
+        "password": "totproject", 
+        "namespace": "help_db", 
+        "user": "TeamOfThings", 
+        "port": "19130"
+    }, 
+    "server-ip": "192.168.1.85", 
+    "publish_topic": "update/stations", 
     "broker-ip": "192.168.1.85"
 }
