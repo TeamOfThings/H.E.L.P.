@@ -53,11 +53,11 @@ def help(bot, update, chat_data):
                 '\n\n'\
                 'Ask me some *information* about your indoor localization system:\n\n' \
                 '_Commands_:\n' \
-                '/whereIs <user> to see in which room is the user;\n' \
-                '/whereAreAll to see the position of all users;\n' \
-                '/roomList to see the list of your rooms;\n' \
-                '/usersList to see the list of registered users;\n' \
-                '/whoIsIn <room> to see who is in that room;\n' \
+                '/whereis <user> to see in which room is the user;\n' \
+                '/whereareall to see the position of all users;\n' \
+                '/roomlist to see the list of your rooms;\n' \
+                '/userlist to see the list of registered users;\n' \
+                '/whoisin <room> to see who is in that room;\n' \
                 '\n\n'\
                 'Maybe do you want me to *add* some new things to your system?\n\n' \
                 '_Commands_:\n' \
@@ -66,8 +66,8 @@ def help(bot, update, chat_data):
                 '\n\n'\
                 'Or do you want me to *remove* something/one from your system?\n\n' \
                 '_Commands_:\n' \
-                '- /deleteUser <user> to remove a user from your system;\n' \
-                '- /deleteRoom <room> to remove a room from your system;\n' \
+                '- /deleteuser <user> to remove a user from your system;\n' \
+                '- /deleteroom <room> to remove a room from your system;\n' \
                 '\n\n'\
                 'Anyway, write /help to display this message again.\n' \
 
@@ -95,7 +95,7 @@ def getUserList(bot, update):
             update.message.reply_text("Connection error")
 
     except (IndexError, ValueError):
-        update.message.reply_text('Use /usersList')
+        update.message.reply_text('Use /userlist')
 
 
 
@@ -121,7 +121,7 @@ def getUser(bot, update, args, chat_data):
             update.message.reply_text("Connection error")
 
     except (IndexError, ValueError):
-        update.message.reply_text('Use /whereIs <user>')
+        update.message.reply_text('Use /whereis <user>')
 
 
 ########## All Users
@@ -145,7 +145,7 @@ def getUsers(bot, update):
             update.message.reply_text("Connection error")
 
     except (IndexError, ValueError):
-        update.message.reply_text('Use /whereAreAll')
+        update.message.reply_text('Use /whereareall')
 
 
 ########## Room List
@@ -172,7 +172,7 @@ def getRoomList(bot, update):
             update.message.reply_text("Connection error")
             
     except (IndexError, ValueError):
-        update.message.reply_text('Use /roomList')
+        update.message.reply_text('Use /roomlist')
 
 
 ########## Users in a Room
@@ -208,7 +208,7 @@ def getRoom(bot, update, args, chat_data):
             update.message.reply_text("Connection error")
 
     except (IndexError, ValueError):
-        update.message.reply_text('Use /whoIsIn <room>')
+        update.message.reply_text('Use /whoisin <room>')
 
 
 #######################################   POST   #######################################
@@ -295,7 +295,7 @@ def deleteUser(bot, update, args):
             update.message.reply_text("Connection error")
         
     except (IndexError, ValueError):
-        update.message.reply_text('Use /deleteUser <user>')
+        update.message.reply_text('Use /deleteuser <user>')
 
 
 ########## DELETE Room
@@ -320,7 +320,7 @@ def deleteRoom(bot, update, args):
             update.message.reply_text("Connection error")
         
     except (IndexError, ValueError):
-        update.message.reply_text('Use /deleteRoom <room>')
+        update.message.reply_text('Use /deleteroom <room>')
 
 
 #### MAIN ####
@@ -344,14 +344,14 @@ def main():
     dispatcher.add_handler(CommandHandler("start", help, pass_chat_data=True))
     dispatcher.add_handler(CommandHandler("help", help, pass_chat_data=True))
     
-    dispatcher.add_handler(CommandHandler("whereIs", getUser, pass_args=True, pass_chat_data=True))
-    dispatcher.add_handler(CommandHandler("whereAreAll", getUsers))
-    dispatcher.add_handler(CommandHandler("userList", getUserList))
-    dispatcher.add_handler(CommandHandler("roomList", getRoomList))    
-    dispatcher.add_handler(CommandHandler("whoIsIn", getRoom, pass_args=True, pass_chat_data=True))
+    dispatcher.add_handler(CommandHandler("whereis", getUser, pass_args=True, pass_chat_data=True))
+    dispatcher.add_handler(CommandHandler("whereareall", getUsers))
+    dispatcher.add_handler(CommandHandler("userlist", getUserList))
+    dispatcher.add_handler(CommandHandler("roomlist", getRoomList))    
+    dispatcher.add_handler(CommandHandler("whoisin", getRoom, pass_args=True, pass_chat_data=True))
 
-    dispatcher.add_handler(CommandHandler("deleteUser", deleteUser, pass_args=True))
-    dispatcher.add_handler(CommandHandler("deleteRoom", deleteRoom, pass_args=True))
+    dispatcher.add_handler(CommandHandler("deleteuser", deleteUser, pass_args=True))
+    dispatcher.add_handler(CommandHandler("deleteroom", deleteRoom, pass_args=True))
 
     # Handler for messages which are a photo
     dispatcher.add_handler(MessageHandler(Filters.photo, add))
