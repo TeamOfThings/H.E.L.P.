@@ -1,6 +1,48 @@
-# Locator Used by Chiara and Andrea (L.U.C.A)
+# H.E.L.P. Home Environment Locating People
 
-**Notice: sniffer program have to be executed as root!**
+Project of Mobile and Cyber Physical Systems, University of Pisa, 2017 / 2018.
+
+This project is conceived and developed by
+
+- [Chiara Baraglia](https://github.com/CB-92)
+- [Luca Di Mauro](https://github.com/dima91)
+- [Andrea Lisi](https://github.com/0Alic)
+
+Thanks to CNR of Pisa for the hardware.
+
+## Overview
+
+A simple indoor localization system based on wearable BLE tags, with support of a notification system and RESTful service.
+
+## Hardware
+
+This system is tested with this hardware:
+
+- **Wereable BLE tag**: [RadBeacon dot](https://store.radiusnetworks.com/collections/all/products/radbeacon-dot)
+- **Stations**: Raspberry PI (with a bluetooth dongle if bluetooth isn't integrated already);
+- **Server**: one of our laptops.
+
+## Software
+
+Both stations and server run python scripts, so in all of them a python 2 interpreter is needed. 
+
+**Stations:** to scan for bluetooth messages is used the library [BluePy](http://ianharvey.github.io/bluepy-doc/).
+
+**Server:** the server runs a [MQTT broker](https://medium.com/@erinus/mosquitto-paho-mqtt-python-29cadb6f8f5c), it connects to a [MongoDB](http://api.mongodb.com/python/current/index.html) database and uses [Flask](http://flask.pocoo.org/) as REST api to give the ability of user interaction.
+
+**Server(bot):** a telegram bot developed with [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot).
+
+## More information
+
+### REST API
+||GET|POST|DELETE|
+|---|---|---|---|
+|**/rooms**|Get the list of all rooms|-|-|
+|**/rooms/[rn]**|Get list of people in room  **rn**|Create new room **rn**|Delete a room  **rn**|
+|**/readings/[bId]**|Get the list of readings about a beacon (grouped by room)|-|Delete ALL readings about a beacon|
+|**/peopleList**|get the list of users registered to the service|-|-|
+|**/people**|Get list of people locations|-|-|
+|**/people/[pId]**|-|Create user **pId**|Delete user **pId**|
 
 ### Documentation
 https://docs.readthedocs.io/en/latest/index.html
@@ -14,15 +56,6 @@ https://docs.readthedocs.io/en/latest/index.html
 * https://docs.python.org/2/library/json.html
 * https://github.com/python-telegram-bot/python-telegram-bot
 * http://api.mongodb.com/python/current/index.html
-
-### REST API
-||GET|POST|DELETE|
-|---|---|---|---|
-|**/rooms/**|Get the list of all rooms|-|-|
-|**/rooms/[rid]**|-|Create new room (given as parameter)|Delete a room (given as parameter)|
-|**/readings/[bId]**|Get the list of readings about a beacon (grouped by room)|-|Delete ALL readings about a beacon|
-|**/people/[rId]**|Get list of people locations|-|-|
-|**/people/[rId]**|Get the list of people (iBeacon) in the selected room|-|-|
 
 ## TODO
 - [ ] Dormire :lollipop:
