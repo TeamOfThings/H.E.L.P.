@@ -194,7 +194,7 @@ def main():
     scanInterval = float(json_data["scan_interval"])
     sendInterval = float(json_data["send_interval"])
 
-	configFileName = sys.argv[1]
+    configFileName = sys.argv[1]
 
     devLock     = Lock()
 
