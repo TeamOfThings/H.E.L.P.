@@ -293,7 +293,7 @@ def getPeopleList () :
 		p= configFileContent["devices"][d]
 		people.append(p)
 	configFCLocker.release ()
-	return Response (json.dumps(people))
+	return Response(json.dumps(people), status=200, content_type="application/json")
 
 
 

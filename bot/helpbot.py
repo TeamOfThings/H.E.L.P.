@@ -7,7 +7,7 @@
 
     Press CTRL-Z to stop the bot
 """
-
+import telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from telegram import InlineQueryResultArticle, InputTextMessageContent
 from telegram.ext import InlineQueryHandler
@@ -46,33 +46,57 @@ def error(bot, update, error):
 
 # TODO scrivere meglio messaggi di HTTP error, e non "error" come sto facendo adesso, paxxerellino pigrotto XDXD asdasd
 
-def help(bot, update):
+def help(bot, update, chat_data):
     """ Bot LineCommand: /start or /help """
 
-    startText = 'Hi! I am L.U.C.A. bot\n' \
-                '\n'\
-                'Ask me about your indoor localization system:\n' \
-                'Commands:\n' \
-                '/getUser <user> to see in which room is the user;\n' \
-                '/getUsers to see the position of all users;\n' \
+    startText = 'Hi! I am HELPbot\n' \
+                '\n\n'\
+                'Ask me some *information* about your indoor localization system:\n\n' \
+                '_Commands_:\n' \
+                '/whereIs <user> to see in which room is the user;\n' \
+                '/whereAreAll to see the position of all users;\n' \
                 '/roomList to see the list of your rooms;\n' \
-                '/getRoom <room> to see who is in that room;\n' \
-                '\n'\
-                'Maybe do you want me to add some new things to your system?\n' \
-                'Commands:\n' \
-                'If you want to add a new user send me a picture of the QR code on the device that you want to associate with that user and specify in the caption the name of the new user.\n'\
-                'If you want to add a new station send me a picture of the QR code on the station that you want to associate with that room and specify in the caption the name of the room.\n'\
-                '\n'\
-                'Or do you want me to remove somethings/one from your system?\n' \
-                'Commands:\n' \
-                '/deleteUser <user> to remove a user from your system;\n' \
-                '/deleteRoom <room> to remove a room from your system;\n' \
-                '\n'\
+                '/usersList to see the list of registered users;\n' \
+                '/whoIsIn <room> to see who is in that room;\n' \
+                '\n\n'\
+                'Maybe do you want me to *add* some new things to your system?\n\n' \
+                '_Commands_:\n' \
+                'To add a new user send me a picture of the QR code on the device that you want to associate with that user and specify in the caption the name of the new user;\n'\
+                'To add a new station send me a picture of the QR code on the station that you want to associate with that room and specify in the caption the name of the room;\n'\
+                '\n\n'\
+                'Or do you want me to *remove* something/one from your system?\n\n' \
+                '_Commands_:\n' \
+                '- /deleteUser <user> to remove a user from your system;\n' \
+                '- /deleteRoom <room> to remove a room from your system;\n' \
+                '\n\n'\
                 'Anyway, write /help to display this message again.\n' \
 
-    update.message.reply_text(startText)
+    chat_id = update.message.chat_id
+    bot.send_message(chat_id, startText, parse_mode=telegram.ParseMode.MARKDOWN)
 
 #######################################   GET   #######################################
+
+########## User List
+def getUserList(bot, update):
+    """
+        Get the list of all the users
+    """
+    try:
+        req = requests.get('http://'+ip_address+':8080/peopleList')
+
+        if(req.status_code == OKGET):
+            txt = ""
+            msg = req.json()
+            for b in msg:
+                txt += str(b) + "\n"
+
+            update.message.reply_text(txt)
+        else :
+            update.message.reply_text("Connection error")
+
+    except (IndexError, ValueError):
+        update.message.reply_text('Use /usersList')
+
 
 
 ########## Single User
@@ -97,7 +121,7 @@ def getUser(bot, update, args, chat_data):
             update.message.reply_text("Connection error")
 
     except (IndexError, ValueError):
-        update.message.reply_text('Use /getUser <user>')
+        update.message.reply_text('Use /whereIs <user>')
 
 
 ########## All Users
@@ -121,7 +145,7 @@ def getUsers(bot, update):
             update.message.reply_text("Connection error")
 
     except (IndexError, ValueError):
-        update.message.reply_text('Use /getUsers')
+        update.message.reply_text('Use /whereAreAll')
 
 
 ########## Room List
@@ -184,7 +208,7 @@ def getRoom(bot, update, args, chat_data):
             update.message.reply_text("Connection error")
 
     except (IndexError, ValueError):
-        update.message.reply_text('Use /getRoom <room>')
+        update.message.reply_text('Use /whoIsIn <room>')
 
 
 #######################################   POST   #######################################
@@ -317,16 +341,14 @@ def main():
     ip_address = jsonData["ip_address"]
 
     # Add commands to the bot
-    dispatcher.add_handler(CommandHandler("start", help))
-    dispatcher.add_handler(CommandHandler("help", help))
+    dispatcher.add_handler(CommandHandler("start", help, pass_chat_data=True))
+    dispatcher.add_handler(CommandHandler("help", help, pass_chat_data=True))
     
-    dispatcher.add_handler(CommandHandler("getUser", getUser, pass_args=True, pass_chat_data=True))
-    dispatcher.add_handler(CommandHandler("getUsers", getUsers))
+    dispatcher.add_handler(CommandHandler("whereIs", getUser, pass_args=True, pass_chat_data=True))
+    dispatcher.add_handler(CommandHandler("whereAreAll", getUsers))
+    dispatcher.add_handler(CommandHandler("userList", getUserList))
     dispatcher.add_handler(CommandHandler("roomList", getRoomList))    
-    dispatcher.add_handler(CommandHandler("getRoom", getRoom, pass_args=True, pass_chat_data=True))
-
-    #dispatcher.add_handler(CommandHandler("addUser", addRoom, pass_args=True))
-    #dispatcher.add_handler(CommandHandler("addRoom", addUser, pass_args=True))
+    dispatcher.add_handler(CommandHandler("whoIsIn", getRoom, pass_args=True, pass_chat_data=True))
 
     dispatcher.add_handler(CommandHandler("deleteUser", deleteUser, pass_args=True))
     dispatcher.add_handler(CommandHandler("deleteRoom", deleteRoom, pass_args=True))
