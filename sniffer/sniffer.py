@@ -16,6 +16,8 @@ pubTopic        = ""
 subTopic        = ""
 scanInterval    = "1"
 
+configFileName  = ""
+
 devLock         = None
 
 # TODO test
@@ -134,7 +136,7 @@ def on_connect(client, userdata, flags, rc):
 
 def dumpToFile():
     """
-        Update the file station.json
+        Update the file $configFileName
     """
     data = dict()
     data["id"] = stationId
@@ -145,7 +147,7 @@ def dumpToFile():
     data["scan_interval"] = scanInterval
     data["send_interval"] = sendInterval
 
-    with open('station.json', 'w') as outfile:
+    with open(configFileName, 'w') as outfile:
         json.dump(data, outfile, indent=4)
 
 
@@ -180,6 +182,8 @@ def main():
     global scanInterval
     global sendInterval
 
+	global configFileName
+
     global devLock
 
     stationId    = json_data["id"]
@@ -189,6 +193,8 @@ def main():
     subTopic     = json_data["subscribe_topic"]
     scanInterval = float(json_data["scan_interval"])
     sendInterval = float(json_data["send_interval"])
+
+	configFileName = sys.argv[1]
 
     devLock     = Lock()
 
