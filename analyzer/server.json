@@ -18,7 +18,7 @@
         "0c:f3:ee:04:2e:5e": "chiara", 
         "0c:f3:ee:04:2e:b4": "luca"
     }, 
-    "server-ip": "192.168.1.75", 
+    "server-ip": "192.168.1.7", 
     "publish_topic": "update/stations", 
-    "broker-ip": "192.168.1.75"
+    "broker-ip": "192.168.1.7"
 }

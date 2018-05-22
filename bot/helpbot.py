@@ -18,6 +18,8 @@ import requests
 from pyzbar.pyzbar import decode
 from PIL import Image
 
+import re
+
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -29,6 +31,10 @@ ip_address = ""
 OKGET = 200
 OKPOST = 201
 OKDELETE = 200
+
+# Patterns
+mac_pattern = "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
+station_pattern = "^([0-9A-Fa-f]{6})$"
 
 def error(bot, update, error):
     """ Helper function: Display error messages """
@@ -55,7 +61,7 @@ def help(bot, update):
                 'Maybe do you want me to add some new things to your system?\n' \
                 'Commands:\n' \
                 'If you want to add a new user send me a picture of the QR code on the device that you want to associate with that user and specify in the caption the name of the new user.\n'\
-                '/addRoom <newRoom> to add a new room in your system;\n' \
+                'If you want to add a new station send me a picture of the QR code on the station that you want to associate with that room and specify in the caption the name of the room.\n'\
                 '\n'\
                 'Or do you want me to remove somethings/one from your system?\n' \
                 'Commands:\n' \
@@ -188,6 +194,7 @@ def getRoom(bot, update, args, chat_data):
 
 def addUser(bot, update):
 
+
     try:
         if update.message.photo is None:
             update.message.reply_text('no foto')
@@ -203,19 +210,36 @@ def addUser(bot, update):
             if len(text) == 0:
                 update.message.reply_text("No QR code found!")
             else:
-                mac_address = text[-1].data
                 name = update.message.caption
+                data = text[-1].data
 
-                r = requests.post('http://'+ip_address+':8080/people/'+name, data=mac_address)
-
-                if r.status_code == OKPOST:
-                    update.message.reply_text("User "+name+" associated to Mac Address "+mac_address)
-                elif r.content=="Beacon with id  " + name + "  already exists!":
-                    update.message.reply_text("User "+name+" is already associated with a device!\nTry again!")
-                elif r.content=="Mac address  " + mac_address + "  already in use!":
-                    update.message.reply_text("This device is already associated to an user!")
-                else :
-                    update.message.reply_text("Connection error ")
+                if re.match(mac_pattern, data):
+                    # QR code content is a mac address
+                    r = requests.post('http://'+ip_address+':8080/people/'+name, data=data)
+                    if r.status_code == OKPOST:
+                        update.message.reply_text("User "+name+" associated to Mac Address "+data)
+                    elif r.content=="Beacon with id  " + name + "  already exists!":
+                        update.message.reply_text("User "+name+" is already associated with a device!\nTry again!")
+                    elif r.content=="Mac address  " + data + "  already in use!":
+                        update.message.reply_text("This device is already associated to an user!")
+                    else :
+                        update.message.reply_text("Connection error: "+ r.content)
+                elif re.match(station_pattern, data):
+                    # QR code content is a station id
+                    r = requests.post('http://'+ip_address+':8080/rooms/'+name, data=data)
+                    if r.status_code == OKPOST:
+                        update.message.reply_text("Room: "+name+" associated to station "+data)
+                    elif r.content=="Requested room already exists!":
+                        update.message.reply_text("Room "+name+" already exist!")
+                    elif r.content=="Station id already associated!":
+                        update.message.reply_text("This station is already associated to a room!")
+                    else:
+                        update.message.reply_text("Connection error: "+r.content)
+                else:
+                    # QR code doesn't match any pattern
+                    update.message.reply_text("QR code format not supported.")
+               
+                
 
     except (IndexError, ValueError):
         update.message.reply_text('Inserire messaggio di errore')

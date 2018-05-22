@@ -208,6 +208,8 @@ def postRooms(rn):
 		toRet = Response("Invalid raspberry mac", status=400, content_type="text/plain")
 	elif rn in rooms :
 		toRet= Response("Requested room already exists!", status=400, content_type="text/plain")
+	elif request.data in configFileContent["positions"]:
+		toRet = Response("Station id already associated!", status=400, content_type="text/plain")
 	else :
 		entry= {request.data : rn}
 		print ("Creating room  " + str(entry))
