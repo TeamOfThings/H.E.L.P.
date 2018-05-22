@@ -182,7 +182,7 @@ def main():
     global scanInterval
     global sendInterval
 
-	global configFileName
+    global configFileName
 
     global devLock
 
