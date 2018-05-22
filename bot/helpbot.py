@@ -192,7 +192,7 @@ def getRoom(bot, update, args, chat_data):
 
 ########## NEW User
 
-def addUser(bot, update):
+def add(bot, update):
 
 
     try:
@@ -244,29 +244,6 @@ def addUser(bot, update):
     except (IndexError, ValueError):
         update.message.reply_text('Inserire messaggio di errore')
 
-########## NEW Room
-
-def addRoom(bot, update, args):
-    """
-        Add a room to the system 
-    """
-
-    try:
-        room = args[0]
-
-        update.message.reply_text("Added " + room)
-        """
-        r = requests.post('http://'+ip_address+':8080/rooms/'+room)
-
-        if r.status_code == OKPOST:
-
-            update.message.reply_text("Added " + room)
-        else :
-            update.message.reply_text("Connection error")
-        """
-    except (IndexError, ValueError):
-        update.message.reply_text('Use /addRoom <newRoom>')
-
 
 #######################################   DELETE   #######################################
 
@@ -307,16 +284,17 @@ def deleteRoom(bot, update, args):
     try:
         room = args[0]
 
-        update.message.reply_text("Removed " + room)
-        """
         r = requests.delete('http://'+ip_address+':8080/rooms/'+room)
 
         if r.status_code == OKDELETE:
-
             update.message.reply_text("Removed " + room)
+        elif r.content=="Room name is empty!":
+            update.message.reply_text("You didn't specify the name of the room you want to delete.")
+        elif r.content=="Room name  " + room + "  doesn't exist!":
+            update.message.reply_text("Room "+room+" doesn't exist!")
         else :
             update.message.reply_text("Connection error")
-        """
+        
     except (IndexError, ValueError):
         update.message.reply_text('Use /deleteRoom <room>')
 
@@ -348,13 +326,13 @@ def main():
     dispatcher.add_handler(CommandHandler("getRoom", getRoom, pass_args=True, pass_chat_data=True))
 
     #dispatcher.add_handler(CommandHandler("addUser", addRoom, pass_args=True))
-    dispatcher.add_handler(CommandHandler("addRoom", addUser, pass_args=True))
+    #dispatcher.add_handler(CommandHandler("addRoom", addUser, pass_args=True))
 
     dispatcher.add_handler(CommandHandler("deleteUser", deleteUser, pass_args=True))
     dispatcher.add_handler(CommandHandler("deleteRoom", deleteRoom, pass_args=True))
 
     # Handler for messages which are a photo
-    dispatcher.add_handler(MessageHandler(Filters.photo, addUser))
+    dispatcher.add_handler(MessageHandler(Filters.photo, add))
 
     dispatcher.add_error_handler(error)
 
