@@ -214,6 +214,17 @@ def postRooms(rn):
 		entry= {request.data : rn}
 		print ("Creating room  " + str(entry))
 		configFileContent["positions"][request.data]= rn
+		toSend= []
+		for k in configFileContent["devices"] :
+			toSend.append(k)
+		print ("Sending " + str(toSend))
+		payload = {
+			"action" : "add",
+			"mac" : toSend
+		}
+		brokerAddress = configFileContent["broker-ip"]
+		publisher.single (pubTopic, json.dumps(payload), hostname=brokerAddress)
+
 		storeConfigurationFile ()
 		toRet= Response("", status=201, content_type="text/plain")
 	configFCLocker.release()

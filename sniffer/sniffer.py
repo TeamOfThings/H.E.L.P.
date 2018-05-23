@@ -98,7 +98,7 @@ def on_message(client, userdata, message):
         Message struct:
         {
             "action" : "add" / "delete"
-            "mac" : "..."
+            "mac" : ["...", "..."] / "..."
         }
     """
 
@@ -119,9 +119,11 @@ def on_message(client, userdata, message):
         dumpToFile()
 
     elif action == "add":
-        # Add pair
-        devicesArray.append(jsonMsg["mac"])
-        dumpToFile()
+        # Add mac list
+		for m in jsonMsg["mac"] :
+			if not m in devicesArray :
+				devicesArray.append(m)
+		dumpToFile()
 
     else :
         print("Invalid code")
