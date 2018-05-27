@@ -8,11 +8,11 @@ This project is conceived and developed by
 - [Luca Di Mauro](https://github.com/dima91)
 - [Andrea Lisi](https://github.com/0Alic)
 
-Thanks to CNR of Pisa for the hardware.
+Thanks to CNR of Pisa for part of the hardware.
 
 ## Overview
 
-A simple indoor localization system based on wearable BLE tags, with support of a notification system and RESTful service.
+A simple indoor localization system based on wearable BLE tags, easily customizable through the dedicated Telegram Bot.
 
 ## Hardware
 
@@ -24,11 +24,11 @@ This system is tested with this hardware:
 
 ## Software
 
-Both stations and server run python scripts, so in all of them a python 2 interpreter is needed. 
+Both stations and server run python scripts: required a **python 2 interpreter**. 
 
-**Stations:** to scan for bluetooth messages is used the library [BluePy](http://ianharvey.github.io/bluepy-doc/).
+**Stations:** scan for bluetooth messages: library [BluePy](http://ianharvey.github.io/bluepy-doc/).
 
-**Server:** the server runs a [MQTT broker](https://medium.com/@erinus/mosquitto-paho-mqtt-python-29cadb6f8f5c), it connects to a [MongoDB](http://api.mongodb.com/python/current/index.html) database and uses [Flask](http://flask.pocoo.org/) as REST api to give the ability of user interaction.
+**Server:** the server runs a [MQTT broker](https://medium.com/@erinus/mosquitto-paho-mqtt-python-29cadb6f8f5c), it connects to a [MongoDB](http://api.mongodb.com/python/current/index.html) database and provides a machine-to-machine REST interface implemented with [Flask](http://flask.pocoo.org/).
 
 **Server(bot):** a telegram bot developed with [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot).
 
