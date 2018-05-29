@@ -64,7 +64,7 @@ class Sender(Thread):
         self.__map = {}
 	
     def run(self):
-        """ Publish the RSSi map to the MQTT broker every __time """
+        """ Publish the RSSi map to the MQTT broker every __time seconds """
         while(True):
             time.sleep(self.__time)
             payload = self.__buildPayload(self.__map)

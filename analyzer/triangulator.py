@@ -21,6 +21,7 @@ class Triangulate(Thread):
     """
 
     def __init__(self, time, beaconTab, beaconTabLock, dbref):
+		""" Constructor """
         Thread.__init__(self)
         self.__time = time
         self.__beaconTable = beaconTab
@@ -28,6 +29,8 @@ class Triangulate(Thread):
         self.__database = dbref
 	
     def run(self):
+		""" Perform triangulation every __time seconds"""
+		
 		while(True):
 			time.sleep(self.__time)
 
