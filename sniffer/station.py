@@ -6,17 +6,30 @@ import json
 import sys
 from threading import Thread, Lock
 
+"""
+    This code should run in each station of the system
+    Keeps a list of the devices associated to the system; 
+    scans for new RSSi and ignores the ones from devices not in the list;
+    publish the received RSSi list, for each device, to the broker.
+
+    Usage:
+        sudo python station.py station.py
+
+"""
+
+
 # Global Variables, init with default value
-stationId       = ""
-devicesArray    = []
-brokerIP        = "127.0.0.1"
-pubTopic        = ""
-subTopic        = ""
-scanInterval    = "1"
 
-configFileName  = ""
+stationId       = ""                # The unique id of the station
+devicesArray    = []                # The array of devices which sent at least an RSSi
+brokerIP        = "127.0.0.1"       # The IP of the broker
+pubTopic        = ""                # Topic to publish the messages to the server
+subTopic        = ""                # Topic to subscribe to receive messages from the server
+scanInterval    = "1"               # Time to wait before scanning for new RSSi (in seconds)
 
-devLock         = None
+configFileName  = ""                # Name of the configuration file
+
+devLock         = None              # Lock to mutually access to devicesArray
 
 ############################## Classes ##############################
 
