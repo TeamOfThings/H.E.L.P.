@@ -1,11 +1,5 @@
 """
-    Timer Bot to send timed Telegram messages
-
-    Classes
-        Bot: Bot handler
-        JobQueue: Send timed messages
-
-    Press CTRL-Z to stop the bot
+    Bot to interact with HELP localisation system
 """
 import telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
@@ -32,7 +26,7 @@ OKGET = 200
 OKPOST = 201
 OKDELETE = 200
 
-# Patterns
+# Patterns to recognise a MAC address and a station id.
 mac_pattern = "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
 station_pattern = "^([0-9A-Fa-f]{6})$"
 
@@ -43,8 +37,6 @@ def error(bot, update, error):
 
 
 #### LINE COMMANDS ####
-
-# TODO scrivere meglio messaggi di HTTP error, e non "error" come sto facendo adesso, paxxerellino pigrotto XDXD asdasd
 
 def help(bot, update, chat_data):
     """ Bot LineCommand: /start or /help """
@@ -214,24 +206,29 @@ def getRoom(bot, update, args, chat_data):
 #######################################   POST   #######################################
 
 
-########## NEW User
+########## NEW User or NEW room
 
 def add(bot, update):
-
+    """ Add a new user or a new room. """
 
     try:
         if update.message.photo is None:
+            # No photo received
             update.message.reply_text('no foto')
         elif update.message.caption is None:
+            # Photo with no caption
             update.message.reply_text("Missing caption")
         else:
+            # Retreive the photo id and download the picture
             img_id = update.message.photo[-1].file_id
             newFile = bot.get_file(img_id)
             newFile.download('qrcode.png')
 
+            # Decode the QR code
             text = decode(Image.open("qrcode.png"))
             
             if len(text) == 0:
+                # The photo doesn't contain a QR code
                 update.message.reply_text("No QR code found!")
             else:
                 name = update.message.caption
@@ -280,8 +277,6 @@ def deleteUser(bot, update, args):
 
     try:
         user = args[0]
-
-        #update.message.reply_text("Removed " + user)
         
         r = requests.delete('http://'+ip_address+':8080/people/'+user)
 
@@ -356,6 +351,7 @@ def main():
     # Handler for messages which are a photo
     dispatcher.add_handler(MessageHandler(Filters.photo, add))
 
+    # Error handler
     dispatcher.add_error_handler(error)
 
     updater.start_polling()
