@@ -38,11 +38,7 @@ pubTopic= ""
 # Instance of web-server
 webApp = Flask(__name__)
 
-
-
-"""
-	Instance of the database
-"""
+# Instance of the database
 database = None
 
 
@@ -88,17 +84,17 @@ def isMacAddress (ma) :
 
 #######################################   CLASSES   #######################################
 
+# Identifies a single tag
 class BeaconInfo():
 	"""
-		Class for a beacon
-
-		Instances:
-			__map: 	a dictionary map <room, measure_list>
+		Local variables:
+			__map: 	Dictionary <room, measure_list>, which contains  a list of beacons' strength, collected by tag id
 			__id:	Beacon's id
-			__last:	last room a person was detected
+			__last:	Last room a person was detected
 	"""
 
 
+	# Constructor
 	def __init__(self, id, sids):
 		self.__map = dict()
 		self.__id = id
@@ -123,11 +119,8 @@ class BeaconInfo():
 		self.__last = last
 
 
-	# Other Methods
+	# Method to save in the object's map a new measure from a station (identified by 'sid' parameter)
 	def addMeasure(self, sid, measure):
-		"""
-			Add a received measure from a given room
-		"""
 
 		if not self.__map.has_key(str(sid)):
 			self.__map[str(sid)] = []
@@ -136,17 +129,13 @@ class BeaconInfo():
 
 
 	def cleanInfo(self):
-		"""
-			Clean the current (rssi) values from the map
-		"""
+		# Erase all elements contained in the map
 		for e in self.__map:
 			self.__map[e] = []
 
 
 class WebServer(Thread):
-    """
-        Thread running the web server
-    """
+    # Thread running the web server
 
     def __init__(self, app, ip, port):
 		Thread.__init__(self)
@@ -160,20 +149,19 @@ class WebServer(Thread):
 
 
 #######################################   REST INTERFACE   #######################################
-
 ## Routing rules for web server thread
+
+# Route for root
 @webApp.route('/')
 def root():
     return Response("Welcome to REST API!", status=200, content_type="text/plain")
 
-#####
-#####     /rooms
+# Route to get registered rooms
 @webApp.route("/rooms", methods=["GET"])
 def roomsGet():
 	return Response(json.dumps(roomsToArray()), status=200, content_type="application/json")
 
-#####
-#####     /rooms/<rn>
+# Route to get all people who are in a room
 @webApp.route("/rooms/<rn>", methods=['GET'])
 def getRooms (rn):
 	rooms= roomsToArray()
@@ -186,15 +174,14 @@ def getRooms (rn):
 	else :
 		ls = []
 		beaconTableLocker.acquire (True)
-		# Searching all people in a required room
+		# Searching all people in the requested room
 		for b in beaconTable :
 			if beaconTable[b].getLast() == rid :
 				ls.append(beaconTable[b].getId())
 		beaconTableLocker.release()
 		return Response (json.dumps(ls), status=200, content_type="application/json")
 
-
-
+# Route to create a new room in the platform
 @webApp.route("/rooms/<rn>", methods=['POST'])
 def postRooms(rn):
 	toRet= None
@@ -202,6 +189,7 @@ def postRooms(rn):
 
 	rooms= configFileContent["positions"].values()
 
+	# Handling errors
 	if rn == "" :
 		toRet= Response("Room is empty!", status=400, content_type="text/plain")
 	elif request.data == "" :
@@ -211,9 +199,12 @@ def postRooms(rn):
 	elif request.data in configFileContent["positions"]:
 		toRet = Response("Station id already associated!", status=400, content_type="text/plain")
 	else :
+		# Adding new room to local variables
 		entry= {request.data : rn}
 		print ("Creating room  " + str(entry))
 		configFileContent["positions"][request.data]= rn
+		# Once updating internal data structures, the server notifies all stations, through mqtt topic,
+		# about current registered devices (it is done to allow the new station to obtain the devices list)
 		toSend= []
 		for k in configFileContent["devices"] :
 			toSend.append(k)
@@ -231,8 +222,7 @@ def postRooms(rn):
 
 	return toRet
 
-
-
+# Route to remove a room from platform
 @webApp.route("/rooms/<rn>", methods=['DELETE'])
 def deleteRooms(rn):
 	toRet= None
@@ -240,6 +230,7 @@ def deleteRooms(rn):
 
 	rooms= configFileContent["positions"].values()
 
+	# Hnadling errros
 	if rn == "" :
 		toRet= Response("Room name is empty!", status=400, content_type="text/plain")
 	elif not rn in rooms :
@@ -249,6 +240,8 @@ def deleteRooms(rn):
 
 		beaconTableLocker.acquire(True)
 		
+		# Deleting room from internal variables and from each beacon, if the last room where it was
+		# detected is equals to removed room
 		del configFileContent["positions"][rid]
 		storeConfigurationFile ()
 		
@@ -263,10 +256,7 @@ def deleteRooms(rn):
 
 	return toRet
 
-
-
-#####
-#####     /readings/<bid>
+# Route which retreives last received values from a beacon with id equals to 'bid'
 @webApp.route("/readings/<bid>", methods=['GET'])
 def getReadings(bid):
 	if bid == "" :
@@ -279,7 +269,7 @@ def getReadings(bid):
 		beaconTableLocker.release ()
 		return Response(res, status=200, content_type="application/javascript")
 
-
+# Route to delete, if necessary, last received values from a beacon with id equals to 'bid'
 @webApp.route("/readings/<bid>", methods=['DELETE'])
 def deleteReadings(bid):
 	if bid == "" :
@@ -292,9 +282,7 @@ def deleteReadings(bid):
 		beaconTableLocker.release ()
 		return Response("", status=200, content_type="text/plain")
 
-
-#####
-#####	/peopleList
+# Route to get list of people (which are represented by beacons) registered to the system
 @webApp.route("/peopleList", methods=["GET"])
 def getPeopleList () :
 
@@ -306,10 +294,7 @@ def getPeopleList () :
 	configFCLocker.release ()
 	return Response(json.dumps(people), status=200, content_type="application/json")
 
-
-
-#####
-#####     /people
+# Route to get all people who are in the house
 @webApp.route("/people", methods=["GET"])
 def getPeopleLocations():
 
@@ -322,14 +307,14 @@ def getPeopleLocations():
 	beaconTableLocker.release()
 	return Response(json.dumps(people), status=200, content_type="application/json")
 
-
-#####
-#####     /people/<rid>
+# Rotue to register device with id 'pid' and mac address contained in the payload of request
 @webApp.route("/people/<pid>", methods=["POST"])
 def postPeople(pid):
 	toRet= None
 	configFCLocker.acquire(True)
 	beaconTableLocker.acquire(True)
+
+	# Handling errors
 	if pid == "" :
 		toRet= Response("Beacon id is empty!", status=400, content_type="text/plain")
 	elif beaconTable.has_key (pid) :
@@ -343,7 +328,7 @@ def postPeople(pid):
 		configFileContent["devices"].update({request.data:pid})
 		storeConfigurationFile()
 		
-		# Publishing new person to all people with mac address
+		# Notifying registered device to all stations through mqtt topic
 		payload = {
 			"action" : "add",
 			"mac" : request.data
@@ -356,8 +341,7 @@ def postPeople(pid):
 	configFCLocker.release()
 	return toRet
 
-
-
+# Rotue to delete a people fro msystem
 @webApp.route("/people/<pid>", methods=["DELETE"])
 def deletePeople(pid):
 	toRet= None
@@ -380,7 +364,7 @@ def deletePeople(pid):
 		configFileContent["devices"].pop(mac_address)
 		storeConfigurationFile()
 		
-		# Deleting person
+		# Notifying the removal of people 'pid' to all stations to enable filtering of associated mac address
 		payload = {
 			"action" : "delete",
 			"mac" : mac_address,
@@ -394,13 +378,22 @@ def deletePeople(pid):
 	return toRet
 
 
-#######################################   MQTT CALLBACKS   #######################################
+#######################################   MQTT CALLBACK   #######################################
+
+# Callback for received messages from stations which contains received beacons from a station
 
 def on_message(client, userdata, message):
+	""" Structure of received message
+		{
+			"stid" : value
+			{
+				"mac_address1" : [rssi_1, ..., rssi_n]
+				"mac_address2" : [rssi_1, ..., rssi_n]
+				"mac_address3" : [rssi_1, ..., rssi_n]
+				"mac_address4" : [rssi_1, ..., rssi_n]
+			}
+		}
 	"""
-		Broker callback once a msg is received
-	"""
-
 	jsonMsg = json.loads(message.payload.decode("utf-8"))
 	configFCLocker.acquire (True)
 	beaconTableLocker.acquire(True)
@@ -408,10 +401,10 @@ def on_message(client, userdata, message):
 	# Checking if the sender of message is registered
 	found = False
 	for p in configFileContent["positions"] :
-		#if configFileContent["positions"][p] == jsonMsg["station-id"] :
 		if p == jsonMsg["station-id"] :
 			found= True
 
+	# Handling error
 	if not found :
 		print ("Station id  " + jsonMsg["station-id"] + "  doesn't correspond to any registered room!")
 	
@@ -423,31 +416,17 @@ def on_message(client, userdata, message):
 					beaconTable[user].addMeasure(jsonMsg["station-id"],  jsonMsg["map"][mac])
 				
 			except(KeyError):
-				print("Utente " + mac + " rimosso")
+				print("Removed user " + mac)
 
 	beaconTableLocker.release()
 	configFCLocker.release ()
 
-	"""
-		forma del payload
-		{
-			"stid" : value
-			{
-				"mac_address1" : [rssi_1, ..., rssi_n]
-				"mac_address2" : [rssi_1, ..., rssi_n]
-				"mac_address3" : [rssi_1, ..., rssi_n]
-				"mac_address4" : [rssi_1, ..., rssi_n]
-			}
-		}
-	"""
+	
 
 
 #######################################   MAIN   #######################################
 
 def main():
-	"""
-		Main
-	"""
 
 	if len(sys.argv) != 2 :
 		sys.exit("Wrong number of arguments!\n\tExiting")
@@ -464,7 +443,6 @@ def main():
 	print ("Initializing server")
 	configFileName= sys.argv[1]
 	configFileContent = json.load(open(configFileName))
-	#print(json.dumps(configFileContent))
 
 	beaconTable = dict()
 	beaconTableLocker = Lock()
