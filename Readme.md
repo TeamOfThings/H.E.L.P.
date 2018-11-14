@@ -33,3 +33,7 @@ Both stations and server run python scripts: required a **python 2 interpreter**
 **Server(bot):** a telegram bot developed with [python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot).
 
 A few more information on the [wiki](https://github.com/TeamOfThings/H.E.L.P./wiki)!
+
+## Application Poster
+
+![Poster](./poster.png)
